@@ -27,23 +27,16 @@ var (
 func formatLength(l int) string {
 	mins := int(l / 60.0)
 	secs := int(l) % 60
-	return fmt.Sprintf("(%d:%02d)", mins, secs)
+	return fmt.Sprintf("%d:%02d", mins, secs)
 }
 
-func songsMap(songs []*Song) map[string]*Song {
-	s := make(map[string]*Song, len(songs))
-	for i, song := range songs {
-		key := fmt.Sprintf(" %s - %s (%s) ", song.Artist, song.Title, formatLength(song.Length))
-		s[key] = song
+func titles(songs []*Song) []string {
+	titles := make([]string, 0, len(songs))
+	for _, song := range songs {
+		title := fmt.Sprintf(" %s - %s (%s) ", song.Artist, song.Title, formatLength(song.Length))
+		titles = append(titles, title)
 	}
-	return s
-}
-func songKeys(m map[string]*Song) []string {
-	keys := make([]string, 0, len(m))
-	for k := range m {
-		keys = append(keys, k)
-	}
-	return keys
+	return titles
 }
 
 func PlayAndExit() {
@@ -102,10 +95,12 @@ func main() {
 	fmt.Print("Press 'Enter' to continue...")
 	fmt.Scanln()
 
-	songs := songsMap(library.Songs)
-	songKeys := songKeys(songs)
+	songs := library.Songs
+	titles := titles(songs)
 
+	fmt.Println("P1")
 	player := NewPlayer(7)
+	fmt.Println("P2")
 
 	uiHeader := widgets.NewParagraph()
 	uiHeader.Text = header[1:]
@@ -117,34 +112,14 @@ func main() {
 
 	uiSongList := widgets.NewList()
 	uiSongList.Title = "Songs"
-	uiSongList.Rows = songKeys
+	uiSongList.Rows = titles
 	uiSongList.TextStyle = ui.NewStyle(ui.ColorYellow)
 	uiSongList.SelectedRowStyle = ui.NewStyle(ui.ColorBlack, ui.ColorYellow, ui.ModifierBold)
 	uiSongList.WrapText = false
 
-	uiQueueList := widgets.NewList()
-	uiQueueList.Title = "Queue"
-	uiQueueList.Rows = []string{
-		"[0] github.com/gizak/termui",
-		"[1] [你好，世界](fg:blue)",
-		"[2] [こんにちは世界](fg:red)",
-		"[3] [color](fg:white,bg:green) output",
-		"[4] output.go",
-		"[5] random_out.go",
-		"[6] dashboard.go",
-		"[7] foo",
-		"[8] bar",
-		"[9] baz",
-	}
-	uiQueueList.TextStyle = ui.NewStyle(ui.ColorYellow)
-	uiQueueList.WrapText = false
-
 	uiQueueTable := widgets.NewTable()
 	uiQueueTable.Rows = [][]string{
 		[]string{"   ", " Artist", " Title", " Dur.", " Wait"},
-		[]string{" 1 ", " Shout Out Louds", " Sound is the Words", " 4:07 ", " 3:44 "},
-		[]string{" 2 ", " Cranberries", " Lingere", " 3:44 ", " 7:44 "},
-		[]string{" 3 ", " Cranberries", " Dreams", " 3:44 ", " 10:44 "},
 	}
 	uiQueueTable.TextStyle = ui.NewStyle(ui.ColorWhite)
 	uiQueueTable.RowSeparator = true
@@ -189,7 +164,10 @@ func main() {
 
 	ticker := time.NewTicker(time.Second / 30).C
 
+	fmt.Println("Before render")
+
 	ui.Render(grid)
+	fmt.Println("After render")
 
 	uiEvents := ui.PollEvents()
 	for {
@@ -198,16 +176,41 @@ func main() {
 			switch e.ID {
 			case "q", "<C-c>":
 				return
+			case "d":
+				if !player.QueueEmpty() {
+					player.QueueRemove()
+				}
 			case "k", "<Down>":
 				uiSongList.ScrollDown()
 			case "j", "<Up>":
 				uiSongList.ScrollUp()
 			case "<Enter>":
-				currentlySelectedSong := songs[uiSongList.Rows[uiSongList.SelectedRow]]
-				player.QueueAdd(currentlySelectedSong)
+				if !player.QueueFull() {
+					currentlySelectedSong := songs[uiSongList.SelectedRow]
+					player.QueueAdd(currentlySelectedSong)
+				}
 			}
 		case <-ticker:
 			ui.Render(grid)
+		case qe := <-player.QueueEvents:
+			{
+				rows := [][]string{
+					[]string{"   ", " Artist", " Title", " Dur.", " Wait"},
+				}
+
+				for i, qs := range qe.Queue {
+					row := []string{
+						fmt.Sprintf(" %d ", i+1),
+						fmt.Sprintf(" %s ", qs.Song.Artist),
+						fmt.Sprintf(" %s ", qs.Song.Title),
+						fmt.Sprintf(" %s ", formatLength(qs.Song.Length)),
+						fmt.Sprintf(" %s ", formatLength(qs.TimeUntilStart)),
+					}
+					rows = append(rows, row)
+				}
+
+				uiQueueTable.Rows = rows
+			}
 		}
 
 	}

@@ -45,9 +45,6 @@ func (p *Player) Stop() {
 
 func (p *Player) loop() {
 	//songStatusChan := make(chan *SongStatus)
-	for {
-
-	}
 }
 
 func (p *Player) QueueFull() bool {
@@ -70,8 +67,15 @@ func (p *Player) QueueAdd(song *Song) error {
 }
 
 // remove the last item added to the queue
-func (p *Player) QueueRemove() (*Song, error) {
-	return p.queue.QueueRemove()
+func (p *Player) QueueRemove() error {
+	_, err := p.queue.QueueRemove()
+
+	if err != nil {
+		return err
+	}
+
+	p.queueChanged()
+	return nil
 }
 
 func (p *Player) queueChanged() {
@@ -93,7 +97,9 @@ func (p *Player) queueChanged() {
 
 	e := &PlayerQueueStatus{Queue: q}
 
-	p.QueueEvents <- e
+	go func() {
+		p.QueueEvents <- e
+	}()
 }
 
 // NewPlayer creates a new player. It's not thread safe.
@@ -107,7 +113,7 @@ func NewPlayer(maxQueueSize int) *Player {
 		QueueEvents: make(chan *PlayerQueueStatus),
 	}
 
-	go p.loop()
+	//go p.loop()
 
 	return p
 }
