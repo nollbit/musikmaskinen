@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"log"
-	"os"
 	"time"
 
 	ui "github.com/gizak/termui"
@@ -39,6 +38,7 @@ func titles(songs []*Song) []string {
 	return titles
 }
 
+/*
 func PlayAndExit() {
 
 	statusChan := make(chan *SongStatus)
@@ -66,6 +66,7 @@ func PlayAndExit() {
 
 	os.Exit(1)
 }
+*/
 
 func main() {
 	kingpin.Parse()
@@ -98,7 +99,12 @@ func main() {
 	songs := library.Songs
 	titles := titles(songs)
 
-	player := NewPlayer(7)
+	player, err := NewPlayer(7)
+	defer player.Close()
+
+	if err != nil {
+		panic(err)
+	}
 
 	uiHeader := widgets.NewParagraph()
 	uiHeader.Text = header[1:]
@@ -132,7 +138,7 @@ func main() {
 
 	uiSongInfo := widgets.NewParagraph()
 	uiSongInfo.Title = "Current Song"
-	uiSongInfo.Text = "\n [Artist](fg:blue,mod:bold): [Shout out Louds](fg:white,mod:bold)\n [Title](fg:blue,mod:bold):  [Sound is the Word](fg:white,mod:bold)\n [Album](fg:blue,mod:bold):  [Le Album](fg:white,mod:bold)"
+	uiSongInfo.Text = ""
 	uiSongInfo.WrapText = false
 
 	uiSongPlayerGauge := widgets.NewGauge()
@@ -160,6 +166,7 @@ func main() {
 	//go Run()
 
 	ticker := time.NewTicker(time.Second / 30).C
+	queueRefresh := time.NewTicker(time.Second / 10).C
 
 	ui.Render(grid)
 
@@ -183,16 +190,19 @@ func main() {
 					currentlySelectedSong := songs[uiSongList.SelectedRow]
 					player.QueueAdd(currentlySelectedSong)
 				}
+			case "s":
+				player.Skip()
 			}
 		case <-ticker:
 			ui.Render(grid)
-		case qe := <-player.QueueEvents:
+		case <-queueRefresh:
 			{
+
 				rows := [][]string{
 					[]string{"   ", " Artist", " Title", " Dur.", " Wait"},
 				}
 
-				for i, qs := range qe.Queue {
+				for i, qs := range player.GetQueue() {
 					row := []string{
 						fmt.Sprintf(" %d ", i+1),
 						fmt.Sprintf(" %s ", qs.Song.Artist),
@@ -204,6 +214,34 @@ func main() {
 				}
 
 				uiQueueTable.Rows = rows
+			}
+		case songEvent := <-player.SongEvents:
+			{
+				var currentSong string
+				var gaugeLabel string
+				var gaugePercent int
+
+				if songEvent.Done {
+					currentSong = ""
+					gaugeLabel = ""
+					gaugePercent = 0
+				} else {
+					s := songEvent.Song
+
+					template := `
+					 [Artist](fg:blue,mod:bold): [%s](fg:white,mod:bold)
+					 [Title](fg:blue,mod:bold):  [%s](fg:white,mod:bold)
+					 [Album](fg:blue,mod:bold):  [%s](fg:white,mod:bold)
+					 [Year](fg:blue,mod:bold):   [%s](fg:white,mod:bold)`
+
+					currentSong = fmt.Sprintf(template, s.Artist, s.Title, s.Album, s.Year)
+					gaugeLabel = formatLength(songEvent.Remaining)
+					gaugePercent = int((float32(s.Length-songEvent.Remaining) / float32(s.Length)) * 100)
+				}
+
+				uiSongInfo.Text = currentSong
+				uiSongPlayerGauge.Label = gaugeLabel
+				uiSongPlayerGauge.Percent = gaugePercent
 			}
 		}
 

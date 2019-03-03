@@ -1,5 +1,7 @@
 package main
 
+import "fmt"
+
 type (
 	State int
 
@@ -16,7 +18,7 @@ type (
 
 	// continous updates as songs are played
 	PlayerSongStatus struct {
-		SongStatus,
+		*SongStatus
 		Song *Song
 	}
 
@@ -27,6 +29,8 @@ type (
 		QueueEvents          chan *PlayerQueueStatus
 		SongEvents           chan *PlayerSongStatus
 		currentSongRemaining int
+		skipTrackChan        chan bool
+		mp3Player            *Mp3Player
 	}
 )
 
@@ -35,24 +39,12 @@ const (
 	StatePlaying State = iota
 )
 
-func (p *Player) Play() {
-	p.State = StatePlaying
-}
-
-func (p *Player) Stop() {
-	p.State = StateStopped
-}
-
-func (p *Player) loop() {
-	//songStatusChan := make(chan *SongStatus)
-}
-
 func (p *Player) QueueFull() bool {
 	return p.queue.QueueFull()
 }
 
 func (p *Player) QueueEmpty() bool {
-	return p.queue.QueueEmpty()
+	return p.queue.QueueEmpty() && p.playing == nil // include current playing song in the "queue"
 }
 
 // add a song to end of the queue
@@ -68,17 +60,31 @@ func (p *Player) QueueAdd(song *Song) error {
 
 // remove the last item added to the queue
 func (p *Player) QueueRemove() error {
-	_, err := p.queue.QueueRemove()
+	if !p.queue.QueueEmpty() {
+		_, err := p.queue.QueueRemove()
 
-	if err != nil {
-		return err
+		if err != nil {
+			return err
+		}
+	} else if p.playing != nil {
+		p.Skip()
 	}
 
 	p.queueChanged()
 	return nil
 }
 
-func (p *Player) queueChanged() {
+func (p *Player) Skip() {
+	if p.State != StatePlaying {
+		return
+	}
+
+	go func() {
+		p.skipTrackChan <- true
+	}()
+}
+
+func (p *Player) GetQueue() []*QueuedSong {
 	songs := p.queue.Get()
 
 	q := make([]*QueuedSong, 0, len(songs))
@@ -95,25 +101,98 @@ func (p *Player) queueChanged() {
 		remaining += s.Length
 	}
 
-	e := &PlayerQueueStatus{Queue: q}
+	return q
+}
+
+func (p *Player) playNextSong() {
+	if p.QueueEmpty() || p.State == StatePlaying {
+		return
+	}
+
+	if p.playing != nil {
+		fmt.Printf("p.playing = %v\n", p.playing)
+		panic("p.playing should not be set when entering playUntilQueueIsEmpty()")
+	}
+
+	if p.State != StateStopped {
+		panic("state should only be StateStopped when entering playUntilQueueIsEmpty()")
+	}
+
+	p.State = StatePlaying
+
+	nextSong, err := p.queue.Next()
+	if err != nil {
+		panic(err)
+	}
+
+	mp3AbortChan := make(chan bool)
+	mp3SongStatusChan := make(chan *SongStatus)
+
+	p.playing = nextSong
+	go p.mp3Player.PlaySong(p.playing.Path, mp3SongStatusChan, mp3AbortChan)
+
+	go func() {
+		// will this ever be cleaned up?
+		<-p.skipTrackChan
+		mp3AbortChan <- true
+	}()
+
+	go func() {
+		for {
+			ss := <-mp3SongStatusChan
+
+			p.currentSongRemaining = ss.Remaining
+
+			songStatus := &PlayerSongStatus{
+				SongStatus: ss,
+				Song:       p.playing,
+			}
+			p.SongEvents <- songStatus
+
+			if ss.Done {
+				p.playing = nil
+				p.State = StateStopped
+				go p.playNextSong()
+			}
+		}
+	}()
+
+}
+
+func (p *Player) queueChanged() {
+	e := &PlayerQueueStatus{Queue: p.GetQueue()}
 
 	go func() {
 		p.QueueEvents <- e
 	}()
+
+	p.playNextSong()
+
+}
+
+func (p *Player) Close() {
+	p.mp3Player.Close()
 }
 
 // NewPlayer creates a new player. It's not thread safe.
-func NewPlayer(maxQueueSize int) *Player {
+func NewPlayer(maxQueueSize int) (*Player, error) {
 	queue := NewQueue(maxQueueSize)
 
-	p := &Player{
-		State:       StateStopped,
-		queue:       queue,
-		SongEvents:  make(chan *PlayerSongStatus),
-		QueueEvents: make(chan *PlayerQueueStatus),
+	mp3Player, err := NewMp3Player()
+
+	if err != nil {
+		return nil, err
 	}
 
-	//go p.loop()
+	p := &Player{
+		State:         StateStopped,
+		playing:       nil,
+		queue:         queue,
+		SongEvents:    make(chan *PlayerSongStatus),
+		QueueEvents:   make(chan *PlayerQueueStatus),
+		skipTrackChan: make(chan bool),
+		mp3Player:     mp3Player,
+	}
 
-	return p
+	return p, nil
 }

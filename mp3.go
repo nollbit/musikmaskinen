@@ -16,9 +16,29 @@ type SongStatus struct {
 	Err       error
 }
 
-func PlaySong(filename string, statusChan chan *SongStatus, abortChan chan bool) {
+type Mp3Player struct {
+	otoPlayer *oto.Player
+}
 
-	bufSize := 8192
+const (
+	bufSize = 8192
+)
+
+func NewMp3Player() (*Mp3Player, error) {
+	p, err := oto.NewPlayer(44100, 2, 2, bufSize)
+	if err != nil {
+		return nil, err
+	}
+	//defer p.Close()
+
+	return &Mp3Player{otoPlayer: p}, nil
+}
+
+func (m *Mp3Player) Close() {
+	m.otoPlayer.Close()
+}
+
+func (m *Mp3Player) PlaySong(filename string, statusChan chan *SongStatus, abortChan chan bool) {
 
 	signalError := func(err error) {
 		statusChan <- &SongStatus{Err: err}
@@ -40,13 +60,6 @@ func PlaySong(filename string, statusChan chan *SongStatus, abortChan chan bool)
 	byteRate := (int64(d.SampleRate()) * 2 * 2)
 
 	defer d.Close()
-
-	p, err := oto.NewPlayer(d.SampleRate(), 2, 2, bufSize)
-	if err != nil {
-		signalError(err)
-		return
-	}
-	defer p.Close()
 
 	length := d.Length()
 	lengthSeconds := length / byteRate
@@ -70,7 +83,7 @@ func PlaySong(filename string, statusChan chan *SongStatus, abortChan chan bool)
 
 		nr, er := d.Read(buf)
 		if nr > 0 {
-			nw, ew := p.Write(buf[0:nr])
+			nw, ew := m.otoPlayer.Write(buf[0:nr])
 			if nw > 0 {
 				written += int64(nw)
 
