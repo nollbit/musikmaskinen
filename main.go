@@ -98,9 +98,7 @@ func main() {
 	songs := library.Songs
 	titles := titles(songs)
 
-	fmt.Println("P1")
 	player := NewPlayer(7)
-	fmt.Println("P2")
 
 	uiHeader := widgets.NewParagraph()
 	uiHeader.Text = header[1:]
@@ -123,7 +121,6 @@ func main() {
 	}
 	uiQueueTable.TextStyle = ui.NewStyle(ui.ColorWhite)
 	uiQueueTable.RowSeparator = true
-	//uiQueueTable.BorderStyle = ui.NewStyle(ui.ColorGreen)
 	uiQueueTable.FillRow = true
 
 	uiQueueTable.ColumnResizer = func() {
@@ -164,10 +161,7 @@ func main() {
 
 	ticker := time.NewTicker(time.Second / 30).C
 
-	fmt.Println("Before render")
-
 	ui.Render(grid)
-	fmt.Println("After render")
 
 	uiEvents := ui.PollEvents()
 	for {
