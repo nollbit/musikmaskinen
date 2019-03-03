@@ -109,7 +109,7 @@ func main() {
 	uiHeader := widgets.NewParagraph()
 	uiHeader.Text = header[1:]
 	uiHeader.WrapText = false
-	uiHeader.TextStyle = ui.NewStyle(ui.ColorRed)
+	uiHeader.TextStyle = ui.NewStyle(40)
 	uiHeader.Border = false
 	uiHeader.SetRect(0, 0, 110, 8)
 	ui.Render(uiHeader)
