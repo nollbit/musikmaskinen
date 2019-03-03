@@ -19,8 +19,10 @@ const header = `
  ╚═╝     ╚═╝ ╚═════╝ ╚══════╝╚═╝╚═╝  ╚═╝╚═╝     ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚═╝╚═╝  ╚═══╝╚══════╝╚═╝  ╚═══╝`
 
 var (
-	libraryPath      = kingpin.Flag("library", "Where's the music library?").Required().String()
-	libraryIndexPath = kingpin.Flag("library-index", "Where's the music library index?").Default(".mm-index").String()
+	pauseAfterLibraryScan = kingpin.Flag("pause", "Pause after library scan").Default("false").Bool()
+	libraryPath           = kingpin.Flag("library", "Where's the music library?").Required().String()
+	libraryIndexPath      = kingpin.Flag("library-index", "Where's the music library index?").Default(".mm-index").String()
+	maxQueueSize          = kingpin.Flag("max-queue-size", "How many songs can be enqueued?").Default("6").Int()
 )
 
 func formatLength(l int) string {
@@ -38,40 +40,8 @@ func titles(songs []*Song) []string {
 	return titles
 }
 
-/*
-func PlayAndExit() {
-
-	statusChan := make(chan *SongStatus)
-	abortChan := make(chan bool)
-	go PlaySong("testdata/David_Szesztay_-_Cheese.mp3", statusChan, abortChan)
-
-	for {
-		s := <-statusChan
-		if s.Err != nil {
-			panic(s.Err)
-		}
-
-		fmt.Printf("Remaining: %d of %d Done? %v\n", s.Remaining, s.Length, s.Done)
-
-		if s.Remaining == 28 {
-			go func() {
-				abortChan <- true
-			}()
-		}
-
-		if s.Done {
-			break
-		}
-	}
-
-	os.Exit(1)
-}
-*/
-
 func main() {
 	kingpin.Parse()
-
-	//PlayAndExit()
 
 	if err := ui.Init(); err != nil {
 		log.Fatalf("failed to initialize termui: %v", err)
@@ -93,8 +63,10 @@ func main() {
 		panic(err)
 	}
 
-	fmt.Print("Press 'Enter' to continue...")
-	fmt.Scanln()
+	if *pauseAfterLibraryScan {
+		fmt.Print("Press 'Enter' to continue...")
+		fmt.Scanln()
+	}
 
 	songs := library.Songs
 	titles := titles(songs)
@@ -113,6 +85,11 @@ func main() {
 	uiHeader.Border = false
 	uiHeader.SetRect(0, 0, 110, 8)
 	ui.Render(uiHeader)
+
+	uiUsage := widgets.NewParagraph()
+	uiUsage.Title = "Instruction"
+	uiUsage.Text = fmt.Sprintf(" Select a song using the rotary wheel before you!\n Press it to queue the selected song \n Only %d songs can be queued at a time", *maxQueueSize)
+	uiHeader.TextStyle = ui.NewStyle(ui.ColorWhite, ui.ColorBlack, ui.ModifierBold)
 
 	uiSongList := widgets.NewList()
 	uiSongList.Title = "Songs"
@@ -154,7 +131,10 @@ func main() {
 
 	grid.Set(
 		ui.NewRow(1.0,
-			ui.NewCol(0.4, uiSongList),
+			ui.NewCol(0.4,
+				ui.NewRow(0.2, uiUsage),
+				ui.NewRow(0.8, uiSongList),
+			),
 			ui.NewCol(0.6,
 				ui.NewRow(0.2, uiSongInfo),
 				ui.NewRow(0.1, uiSongPlayerGauge),
@@ -167,6 +147,7 @@ func main() {
 
 	ticker := time.NewTicker(time.Second / 30).C
 	queueRefresh := time.NewTicker(time.Second / 10).C
+	bannerColorTicker := time.NewTicker(time.Second / 5).C
 
 	ui.Render(grid)
 
@@ -195,6 +176,13 @@ func main() {
 			}
 		case <-ticker:
 			ui.Render(grid)
+		case <-bannerColorTicker:
+			if uiHeader.TextStyle.Fg == 46 {
+				uiHeader.TextStyle.Fg = 16
+			} else {
+				uiHeader.TextStyle.Fg += 1
+			}
+			ui.Render(uiHeader)
 		case <-queueRefresh:
 			{
 
