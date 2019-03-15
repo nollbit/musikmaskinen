@@ -3,10 +3,10 @@ package main
 import "errors"
 
 type (
-	songQueue []*Song
+	trackQueue []*Track
 
 	Queue struct {
-		queue        songQueue
+		queue        trackQueue
 		MaxQueueSize int
 	}
 )
@@ -24,51 +24,51 @@ func (q *Queue) QueueEmpty() bool {
 	return len(q.queue) == 0
 }
 
-// add a song to end of the queue
-func (q *Queue) QueueAdd(song *Song) error {
+// add a track to end of the queue
+func (q *Queue) QueueAdd(track *Track) error {
 
 	if q.QueueFull() {
 		return ErrorQueueFull
 	}
 
-	q.queue = append(q.queue, song)
+	q.queue = append(q.queue, track)
 
 	return nil
 }
 
 // remove the last item added to the queue
-func (q *Queue) QueueRemove() (*Song, error) {
+func (q *Queue) QueueRemove() (*Track, error) {
 	if q.QueueEmpty() {
 		return nil, ErrorQueueEmpty
 	}
 
-	song := q.queue[len(q.queue)-1]
+	track := q.queue[len(q.queue)-1]
 	q.queue = q.queue[0 : len(q.queue)-1]
 
-	return song, nil
+	return track, nil
 }
 
-// Next removes and returns the next song to be played
-func (q *Queue) Next() (*Song, error) {
+// Next removes and returns the next track to be played
+func (q *Queue) Next() (*Track, error) {
 	if q.QueueEmpty() {
 		return nil, ErrorQueueEmpty
 	}
 
-	song := q.queue[0]
+	track := q.queue[0]
 	q.queue = q.queue[1:]
 
-	return song, nil
+	return track, nil
 }
 
 // Returns the queue as is
-func (q *Queue) Get() []*Song {
+func (q *Queue) Get() []*Track {
 	return q.queue
 }
 
 // NewPlayer creates a new queue. It's not thread safe.
 func NewQueue(maxQueueSize int) *Queue {
 	return &Queue{
-		queue:        make(songQueue, 0),
+		queue:        make(trackQueue, 0),
 		MaxQueueSize: maxQueueSize,
 	}
 }

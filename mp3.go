@@ -9,7 +9,7 @@ import (
 	"github.com/hajimehoshi/go-mp3"
 )
 
-type SongStatus struct {
+type TrackStatus struct {
 	Length    int
 	Remaining int
 	Done      bool
@@ -38,10 +38,10 @@ func (m *Mp3Player) Close() {
 	m.otoPlayer.Close()
 }
 
-func (m *Mp3Player) PlaySong(filename string, statusChan chan *SongStatus, abortChan chan bool) {
+func (m *Mp3Player) PlayTrack(filename string, statusChan chan *TrackStatus, abortChan chan bool) {
 
 	signalError := func(err error) {
-		statusChan <- &SongStatus{Err: err}
+		statusChan <- &TrackStatus{Err: err}
 	}
 
 	f, err := os.Open(filename)
@@ -87,11 +87,11 @@ func (m *Mp3Player) PlaySong(filename string, statusChan chan *SongStatus, abort
 			if nw > 0 {
 				written += int64(nw)
 
-				songStatus := &SongStatus{
+				trackStatus := &TrackStatus{
 					Length:    int(lengthSeconds),
 					Remaining: int((length - written) / byteRate),
 				}
-				statusChan <- songStatus
+				statusChan <- trackStatus
 			}
 			if ew != nil {
 				err = ew
@@ -114,12 +114,12 @@ func (m *Mp3Player) PlaySong(filename string, statusChan chan *SongStatus, abort
 		signalError(err)
 	}
 
-	songStatus := &SongStatus{
+	trackStatus := &TrackStatus{
 		Length:    int(lengthSeconds),
 		Remaining: 0,
 		Done:      true,
 	}
-	statusChan <- songStatus
+	statusChan <- trackStatus
 
 	return
 }

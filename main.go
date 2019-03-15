@@ -22,7 +22,7 @@ var (
 	pauseAfterLibraryScan = kingpin.Flag("pause", "Pause after library scan").Default("false").Bool()
 	libraryPath           = kingpin.Flag("library", "Where's the music library?").Required().String()
 	libraryIndexPath      = kingpin.Flag("library-index", "Where's the music library index?").Default(".mm-index").String()
-	maxQueueSize          = kingpin.Flag("max-queue-size", "How many songs can be enqueued?").Default("6").Int()
+	maxQueueSize          = kingpin.Flag("max-queue-size", "How many tracks can be enqueued?").Default("5").Int()
 )
 
 func formatLength(l int) string {
@@ -31,10 +31,10 @@ func formatLength(l int) string {
 	return fmt.Sprintf("%d:%02d", mins, secs)
 }
 
-func titles(songs []*Song) []string {
-	titles := make([]string, 0, len(songs))
-	for _, song := range songs {
-		title := fmt.Sprintf(" %s - %s (%s) ", song.Artist, song.Title, formatLength(song.Length))
+func titles(tracks []*Track) []string {
+	titles := make([]string, 0, len(tracks))
+	for _, track := range tracks {
+		title := fmt.Sprintf(" %s - %s (%s) ", track.Artist, track.Title, formatLength(track.Length))
 		titles = append(titles, title)
 	}
 	return titles
@@ -68,10 +68,10 @@ func main() {
 		fmt.Scanln()
 	}
 
-	songs := library.Songs
-	titles := titles(songs)
+	tracks := library.Tracks
+	titles := titles(tracks)
 
-	player, err := NewPlayer(7)
+	player, err := NewPlayer(*maxQueueSize)
 	defer player.Close()
 
 	if err != nil {
@@ -88,15 +88,15 @@ func main() {
 
 	uiUsage := widgets.NewParagraph()
 	uiUsage.Title = "Instruction"
-	uiUsage.Text = fmt.Sprintf(" Select a song using the rotary wheel before you!\n Press it to queue the selected song \n Only %d songs can be queued at a time", *maxQueueSize)
+	uiUsage.Text = fmt.Sprintf(" Select a track using the rotary wheel before you!\n Press it to queue the selected track \n Only %d tracks can be queued at a time", *maxQueueSize)
 	uiHeader.TextStyle = ui.NewStyle(ui.ColorWhite, ui.ColorBlack, ui.ModifierBold)
 
-	uiSongList := widgets.NewList()
-	uiSongList.Title = "Songs"
-	uiSongList.Rows = titles
-	uiSongList.TextStyle = ui.NewStyle(ui.ColorYellow)
-	uiSongList.SelectedRowStyle = ui.NewStyle(ui.ColorBlack, ui.ColorYellow, ui.ModifierBold)
-	uiSongList.WrapText = false
+	uiTrackList := widgets.NewList()
+	uiTrackList.Title = "Tracks"
+	uiTrackList.Rows = titles
+	uiTrackList.TextStyle = ui.NewStyle(ui.ColorYellow)
+	uiTrackList.SelectedRowStyle = ui.NewStyle(ui.ColorBlack, ui.ColorYellow, ui.ModifierBold)
+	uiTrackList.WrapText = false
 
 	uiQueueTable := widgets.NewTable()
 	uiQueueTable.Rows = [][]string{
@@ -113,17 +113,17 @@ func main() {
 		uiQueueTable.ColumnWidths = []int{3, columnWidth, columnWidth, 6, 7}
 	}
 
-	uiSongInfo := widgets.NewParagraph()
-	uiSongInfo.Title = "Current Song"
-	uiSongInfo.Text = ""
-	uiSongInfo.WrapText = false
+	uiTrackInfo := widgets.NewParagraph()
+	uiTrackInfo.Title = "Current Track"
+	uiTrackInfo.Text = ""
+	uiTrackInfo.WrapText = false
 
-	uiSongPlayerGauge := widgets.NewGauge()
-	uiSongPlayerGauge.Title = "Playing"
-	uiSongPlayerGauge.Percent = 30
-	uiSongPlayerGauge.LabelStyle = ui.NewStyle(ui.ColorWhite, ui.ColorBlack)
-	uiSongPlayerGauge.Label = "Hello!"
-	uiSongPlayerGauge.BarColor = ui.ColorBlue
+	uiTrackPlayerGauge := widgets.NewGauge()
+	uiTrackPlayerGauge.Title = "Playing"
+	uiTrackPlayerGauge.Percent = 30
+	uiTrackPlayerGauge.LabelStyle = ui.NewStyle(ui.ColorWhite, ui.ColorBlack)
+	uiTrackPlayerGauge.Label = "Hello!"
+	uiTrackPlayerGauge.BarColor = ui.ColorBlue
 
 	grid := ui.NewGrid()
 	termWidth, termHeight := ui.TerminalDimensions()
@@ -133,11 +133,11 @@ func main() {
 		ui.NewRow(1.0,
 			ui.NewCol(0.4,
 				ui.NewRow(0.2, uiUsage),
-				ui.NewRow(0.8, uiSongList),
+				ui.NewRow(0.8, uiTrackList),
 			),
 			ui.NewCol(0.6,
-				ui.NewRow(0.2, uiSongInfo),
-				ui.NewRow(0.1, uiSongPlayerGauge),
+				ui.NewRow(0.2, uiTrackInfo),
+				ui.NewRow(0.1, uiTrackPlayerGauge),
 				ui.NewRow(0.7, uiQueueTable),
 			),
 		),
@@ -163,13 +163,13 @@ func main() {
 					player.QueueRemove()
 				}
 			case "k", "<Down>":
-				uiSongList.ScrollDown()
+				uiTrackList.ScrollDown()
 			case "j", "<Up>":
-				uiSongList.ScrollUp()
+				uiTrackList.ScrollUp()
 			case "<Enter>":
 				if !player.QueueFull() {
-					currentlySelectedSong := songs[uiSongList.SelectedRow]
-					player.QueueAdd(currentlySelectedSong)
+					currentlySelectedTrack := tracks[uiTrackList.SelectedRow]
+					player.QueueAdd(currentlySelectedTrack)
 				}
 			case "s":
 				player.Skip()
@@ -193,9 +193,9 @@ func main() {
 				for i, qs := range player.GetQueue() {
 					row := []string{
 						fmt.Sprintf(" %d ", i+1),
-						fmt.Sprintf(" %s ", qs.Song.Artist),
-						fmt.Sprintf(" %s ", qs.Song.Title),
-						fmt.Sprintf(" %s ", formatLength(qs.Song.Length)),
+						fmt.Sprintf(" %s ", qs.Track.Artist),
+						fmt.Sprintf(" %s ", qs.Track.Title),
+						fmt.Sprintf(" %s ", formatLength(qs.Track.Length)),
 						fmt.Sprintf(" %s ", formatLength(qs.TimeUntilStart)),
 					}
 					rows = append(rows, row)
@@ -203,18 +203,18 @@ func main() {
 
 				uiQueueTable.Rows = rows
 			}
-		case songEvent := <-player.SongEvents:
+		case trackEvent := <-player.TrackEvents:
 			{
-				var currentSong string
+				var currentTrack string
 				var gaugeLabel string
 				var gaugePercent int
 
-				if songEvent.Done {
-					currentSong = ""
+				if trackEvent.Done {
+					currentTrack = ""
 					gaugeLabel = ""
 					gaugePercent = 0
 				} else {
-					s := songEvent.Song
+					s := trackEvent.Track
 
 					template := `
 					 [Artist](fg:blue,mod:bold): [%s](fg:white,mod:bold)
@@ -222,14 +222,14 @@ func main() {
 					 [Album](fg:blue,mod:bold):  [%s](fg:white,mod:bold)
 					 [Year](fg:blue,mod:bold):   [%s](fg:white,mod:bold)`
 
-					currentSong = fmt.Sprintf(template, s.Artist, s.Title, s.Album, s.Year)
-					gaugeLabel = formatLength(songEvent.Remaining)
-					gaugePercent = int((float32(s.Length-songEvent.Remaining) / float32(s.Length)) * 100)
+					currentTrack = fmt.Sprintf(template, s.Artist, s.Title, s.Album, s.Year)
+					gaugeLabel = formatLength(trackEvent.Remaining)
+					gaugePercent = int((float32(s.Length-trackEvent.Remaining) / float32(s.Length)) * 100)
 				}
 
-				uiSongInfo.Text = currentSong
-				uiSongPlayerGauge.Label = gaugeLabel
-				uiSongPlayerGauge.Percent = gaugePercent
+				uiTrackInfo.Text = currentTrack
+				uiTrackPlayerGauge.Label = gaugeLabel
+				uiTrackPlayerGauge.Percent = gaugePercent
 			}
 		}
 

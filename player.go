@@ -5,32 +5,32 @@ import "fmt"
 type (
 	State int
 
-	QueuedSong struct {
-		Song *Song
-		// time in seconds until this song starts playing
+	QueuedTrack struct {
+		Track *Track
+		// time in seconds until this tracks starts playing
 		TimeUntilStart int
 	}
 
 	// any changes in the queue are signalled heree
 	PlayerQueueStatus struct {
-		Queue []*QueuedSong
+		Queue []*QueuedTrack
 	}
 
-	// continous updates as songs are played
-	PlayerSongStatus struct {
-		*SongStatus
-		Song *Song
+	// continous updates as tracks are played
+	PlayerTrackStatus struct {
+		*TrackStatus
+		Track *Track
 	}
 
 	Player struct {
-		State                State
-		playing              *Song
-		queue                *Queue
-		QueueEvents          chan *PlayerQueueStatus
-		SongEvents           chan *PlayerSongStatus
-		currentSongRemaining int
-		skipTrackChan        chan bool
-		mp3Player            *Mp3Player
+		State                 State
+		playing               *Track
+		queue                 *Queue
+		QueueEvents           chan *PlayerQueueStatus
+		TrackEvents           chan *PlayerTrackStatus
+		currentTrackRemaining int
+		skipTrackChan         chan bool
+		mp3Player             *Mp3Player
 	}
 )
 
@@ -44,12 +44,12 @@ func (p *Player) QueueFull() bool {
 }
 
 func (p *Player) QueueEmpty() bool {
-	return p.queue.QueueEmpty() && p.playing == nil // include current playing song in the "queue"
+	return p.queue.QueueEmpty() && p.playing == nil // include current playing track in the "queue"
 }
 
-// add a song to end of the queue
-func (p *Player) QueueAdd(song *Song) error {
-	err := p.queue.QueueAdd(song)
+// add a tracks to end of the queue
+func (p *Player) QueueAdd(track *Track) error {
+	err := p.queue.QueueAdd(track)
 	if err != nil {
 		return err
 	}
@@ -84,16 +84,16 @@ func (p *Player) Skip() {
 	}()
 }
 
-func (p *Player) GetQueue() []*QueuedSong {
-	songs := p.queue.Get()
+func (p *Player) GetQueue() []*QueuedTrack {
+	tracks := p.queue.Get()
 
-	q := make([]*QueuedSong, 0, len(songs))
+	q := make([]*QueuedTrack, 0, len(tracks))
 
-	remaining := p.currentSongRemaining
+	remaining := p.currentTrackRemaining
 
-	for _, s := range songs {
-		qs := &QueuedSong{
-			Song:           s,
+	for _, s := range tracks {
+		qs := &QueuedTrack{
+			Track:          s,
 			TimeUntilStart: remaining,
 		}
 		q = append(q, qs)
@@ -104,7 +104,7 @@ func (p *Player) GetQueue() []*QueuedSong {
 	return q
 }
 
-func (p *Player) playNextSong() {
+func (p *Player) playNextTrack() {
 	if p.QueueEmpty() || p.State == StatePlaying {
 		return
 	}
@@ -120,16 +120,16 @@ func (p *Player) playNextSong() {
 
 	p.State = StatePlaying
 
-	nextSong, err := p.queue.Next()
+	nextTrack, err := p.queue.Next()
 	if err != nil {
 		panic(err)
 	}
 
 	mp3AbortChan := make(chan bool)
-	mp3SongStatusChan := make(chan *SongStatus)
+	mp3TrackStatusChan := make(chan *TrackStatus)
 
-	p.playing = nextSong
-	go p.mp3Player.PlaySong(p.playing.Path, mp3SongStatusChan, mp3AbortChan)
+	p.playing = nextTrack
+	go p.mp3Player.PlayTrack(p.playing.Path, mp3TrackStatusChan, mp3AbortChan)
 
 	go func() {
 		// will this ever be cleaned up?
@@ -139,20 +139,20 @@ func (p *Player) playNextSong() {
 
 	go func() {
 		for {
-			ss := <-mp3SongStatusChan
+			ss := <-mp3TrackStatusChan
 
-			p.currentSongRemaining = ss.Remaining
+			p.currentTrackRemaining = ss.Remaining
 
-			songStatus := &PlayerSongStatus{
-				SongStatus: ss,
-				Song:       p.playing,
+			trackStatus := &PlayerTrackStatus{
+				TrackStatus: ss,
+				Track:       p.playing,
 			}
-			p.SongEvents <- songStatus
+			p.TrackEvents <- trackStatus
 
 			if ss.Done {
 				p.playing = nil
 				p.State = StateStopped
-				go p.playNextSong()
+				go p.playNextTrack()
 			}
 		}
 	}()
@@ -166,7 +166,7 @@ func (p *Player) queueChanged() {
 		p.QueueEvents <- e
 	}()
 
-	p.playNextSong()
+	p.playNextTrack()
 
 }
 
@@ -188,7 +188,7 @@ func NewPlayer(maxQueueSize int) (*Player, error) {
 		State:         StateStopped,
 		playing:       nil,
 		queue:         queue,
-		SongEvents:    make(chan *PlayerSongStatus),
+		TrackEvents:   make(chan *PlayerTrackStatus),
 		QueueEvents:   make(chan *PlayerQueueStatus),
 		skipTrackChan: make(chan bool),
 		mp3Player:     mp3Player,

@@ -17,8 +17,7 @@ import (
 )
 
 type (
-	// Song represents a song in the library
-	Song struct {
+	Track struct {
 		Artist string
 		Title  string
 		Album  string
@@ -29,14 +28,14 @@ type (
 	}
 
 	// The index where we keep a content adressable cache
-	Index map[string]*Song
+	Index map[string]*Track
 
-	loadFromIndex func(string) (*Song, bool, error)
+	loadFromIndex func(string) (*Track, bool, error)
 
-	// The library as exposed to the world
+	// Library can add MP3 tracks from directories and keep an on-disk cache for quick startups
 	Library struct {
 		IndexPath string
-		Songs     []*Song
+		Tracks    []*Track
 		Index     Index
 	}
 )
@@ -83,7 +82,7 @@ func getLength(filename string) (int, error) {
 }
 
 // extracts information about a single song
-func extract(filename string, cacheLoader loadFromIndex) (*Song, error) {
+func extract(filename string, cacheLoader loadFromIndex) (*Track, error) {
 	ctxLogger := log.WithField("filename", filename)
 	hash, err := getSha1(filename)
 	if err != nil {
@@ -113,7 +112,7 @@ func extract(filename string, cacheLoader loadFromIndex) (*Song, error) {
 		return nil, err
 	}
 
-	song = &Song{
+	song = &Track{
 		Artist: strings.Trim(mp3File.Artist(), "\u0000"),
 		Title:  strings.Trim(mp3File.Title(), "\u0000"),
 		Album:  strings.Trim(mp3File.Album(), "\u0000"),
@@ -126,8 +125,8 @@ func extract(filename string, cacheLoader loadFromIndex) (*Song, error) {
 	return song, nil
 }
 
-func scan(rootPath string, cacheLoader loadFromIndex) ([]*Song, error) {
-	songs := make([]*Song, 0)
+func scan(rootPath string, cacheLoader loadFromIndex) ([]*Track, error) {
+	songs := make([]*Track, 0)
 
 	err := filepath.Walk(rootPath, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -160,8 +159,8 @@ func scan(rootPath string, cacheLoader loadFromIndex) ([]*Song, error) {
 }
 
 // create creates an index from a bunch of songs
-func createIndex(songs []*Song) Index {
-	i := make(map[string]*Song)
+func createIndex(songs []*Track) Index {
+	i := make(map[string]*Track)
 
 	for _, song := range songs {
 		i[song.Hash] = song
@@ -193,7 +192,7 @@ func unserializeIndex(data []byte) (Index, error) {
 	return index, nil
 }
 
-func (l *Library) loadFromIndex(hash string) (*Song, bool, error) {
+func (l *Library) loadFromIndex(hash string) (*Track, bool, error) {
 	song, ok := l.Index[hash]
 	return song, ok, nil
 }
@@ -205,14 +204,14 @@ func (l *Library) Add(rootPath string) error {
 		return err
 	}
 
-	l.Songs = append(l.Songs, songs...)
+	l.Tracks = append(l.Tracks, songs...)
 
 	return nil
 }
 
 // WriteIndex writes the index to disk. Run if after you've added all songs.
 func (l *Library) WriteIndex() error {
-	l.Index = createIndex(l.Songs)
+	l.Index = createIndex(l.Tracks)
 
 	indexBytes, err := serializeIndex(l.Index)
 	if err != nil {
@@ -249,17 +248,17 @@ func (l *Library) readIndex() error {
 
 // Sort sorts the song list in place. Run this after all libraries has been added.
 func (l *Library) Sort() {
-	sort.Slice(l.Songs, func(i, j int) bool {
-		if l.Songs[i].Artist != l.Songs[j].Artist {
-			return l.Songs[i].Artist < l.Songs[j].Artist
+	sort.Slice(l.Tracks, func(i, j int) bool {
+		if l.Tracks[i].Artist != l.Tracks[j].Artist {
+			return l.Tracks[i].Artist < l.Tracks[j].Artist
 		}
-		return l.Songs[i].Title < l.Songs[j].Title
+		return l.Tracks[i].Title < l.Tracks[j].Title
 	})
 }
 
 // NewLibrary creates a new library and reads the index file.
 func NewLibrary(indexPath string) (*Library, error) {
-	library := &Library{Songs: make([]*Song, 0), IndexPath: indexPath}
+	library := &Library{Tracks: make([]*Track, 0), IndexPath: indexPath}
 	err := library.readIndex()
 
 	if err != nil {
