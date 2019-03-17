@@ -1,9 +1,13 @@
-package main
+package spotify
 
-import "errors"
+import (
+	"errors"
+
+	"github.com/zmb3/spotify"
+)
 
 type (
-	trackQueue []*Track
+	trackQueue []spotify.FullTrack
 
 	Queue struct {
 		queue        trackQueue
@@ -25,7 +29,7 @@ func (q *Queue) QueueEmpty() bool {
 }
 
 // add a track to end of the queue
-func (q *Queue) QueueAdd(track *Track) error {
+func (q *Queue) QueueAdd(track spotify.FullTrack) error {
 
 	if q.QueueFull() {
 		return ErrorQueueFull
@@ -37,7 +41,7 @@ func (q *Queue) QueueAdd(track *Track) error {
 }
 
 // remove the last item added to the queue
-func (q *Queue) QueueRemove() (*Track, error) {
+func (q *Queue) QueueRemove() (*spotify.FullTrack, error) {
 	if q.QueueEmpty() {
 		return nil, ErrorQueueEmpty
 	}
@@ -45,11 +49,11 @@ func (q *Queue) QueueRemove() (*Track, error) {
 	track := q.queue[len(q.queue)-1]
 	q.queue = q.queue[0 : len(q.queue)-1]
 
-	return track, nil
+	return &track, nil
 }
 
 // Next removes and returns the next track to be played
-func (q *Queue) Next() (*Track, error) {
+func (q *Queue) Next() (*spotify.FullTrack, error) {
 	if q.QueueEmpty() {
 		return nil, ErrorQueueEmpty
 	}
@@ -57,11 +61,11 @@ func (q *Queue) Next() (*Track, error) {
 	track := q.queue[0]
 	q.queue = q.queue[1:]
 
-	return track, nil
+	return &track, nil
 }
 
 // Returns the queue as is
-func (q *Queue) Get() []*Track {
+func (q *Queue) Get() []spotify.FullTrack {
 	return q.queue
 }
 

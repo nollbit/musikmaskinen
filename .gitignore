@@ -2,3 +2,5 @@
 .DS_Store
 vendor/
 musikmaskinen
+run_with_secrets.sh
+mm.log
