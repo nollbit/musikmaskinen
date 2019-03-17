@@ -14,12 +14,14 @@ int rotaryBtnLast;
 int rotaryPinAValue;
 int rotaryButtonValue;
 
+//boolean rotaryRotationIsClockwise;
+int rotaryRotation = 0;
+
 int pushButtonValue;
 int pushButtonLast;
 int btnLargeLedMode = LED_MODE_OFF;
 
 
-boolean bCW;
 void setup() {
   
  pinMode(PIN_ROTARY_A,INPUT);
@@ -27,6 +29,8 @@ void setup() {
  pinMode(PIN_ROTARY_BTN,INPUT_PULLUP);
  pinMode(PIN_PUSHBUTTON,INPUT_PULLUP);
  pinMode(PIN_PUSHBUTTON_LED, OUTPUT);
+
+ digitalWrite(PIN_PUSHBUTTON_LED, HIGH);
 
  rotaryPinALast = digitalRead(PIN_ROTARY_A);
  rotaryBtnLast = digitalRead(PIN_ROTARY_BTN);
@@ -37,6 +41,9 @@ void setup() {
 
 void loop() {
 
+  /*
+   * Read rotary push button 
+   */
   rotaryButtonValue = digitalRead(PIN_ROTARY_BTN);
   if (rotaryButtonValue != rotaryBtnLast) {
     if (rotaryButtonValue == 0) {
@@ -47,6 +54,9 @@ void loop() {
     rotaryBtnLast = rotaryButtonValue;
   }
 
+  /*
+   * Read large push button
+   */
   pushButtonValue = digitalRead(PIN_PUSHBUTTON);
   if (pushButtonValue != pushButtonLast) {
     if (pushButtonValue == 0) {
@@ -57,6 +67,9 @@ void loop() {
     pushButtonLast = pushButtonValue;
   }
 
+  /*
+   * Read rotary encoder
+   */
   rotaryPinAValue = digitalRead(PIN_ROTARY_A);
   if (rotaryPinAValue != rotaryPinALast){ 
     // Means the knob is rotating
@@ -64,17 +77,29 @@ void loop() {
     // We do that by reading pin B.
     if (digitalRead(PIN_ROTARY_B) != rotaryPinAValue) { 
       // Means pin A Changed first - We're Rotating Clockwise
-      bCW = true;
+      //rotaryRotationIsClockwise = true;
+      rotaryRotation++;
     } else {
       // Otherwise B changed first and we're moving CCW
-      bCW = false;
+      //rotaryRotationIsClockwise = false;
+      rotaryRotation--;
     }
-    Serial.print ("Rotated: ");
-    if (bCW){
+    if (rotaryRotation == 2){
+      Serial.print ("Rotated: ");
       Serial.println ("clockwise");
-    }else{
+      rotaryRotation = 0;
+    } else if (rotaryRotation == -2) {
+      Serial.print ("Rotated: ");
       Serial.println("counterclockwise");
+      rotaryRotation = 0;
     }
   }
   rotaryPinALast = rotaryPinAValue;
+
+  /*
+   * Control LED
+   */
+  
+  
+
 }
