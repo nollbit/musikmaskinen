@@ -3,6 +3,10 @@ const int LED_MODE_ON = 1;
 const int LED_MODE_GLOW = 2;
 const int LED_MODE_BLINK = 3;
 
+const int LED_MODE_BLINK_INTERVAL = 2000;
+const int LED_MODE_GLOW_INTERVAL = 25;
+
+
 const int PIN_ROTARY_A = 3; // Connected to CLK
 const int PIN_ROTARY_B = 4; // Connected to DT
 const int PIN_ROTARY_BTN = 5; // Connected to BTN
@@ -14,13 +18,16 @@ int rotaryBtnLast;
 int rotaryPinAValue;
 int rotaryButtonValue;
 
-//boolean rotaryRotationIsClockwise;
 int rotaryRotation = 0;
 
 int pushButtonValue;
 int pushButtonLast;
-int btnLargeLedMode = LED_MODE_OFF;
+int pushButtonLedMode = LED_MODE_GLOW;
+int pushButtonLedValue = 0;
+int pushButtonLedValueDirection = 1;
 
+unsigned long pushButtonLedNextActionAt = 0;
+unsigned long timeMillis;
 
 void setup() {
   
@@ -28,7 +35,7 @@ void setup() {
  pinMode(PIN_ROTARY_B,INPUT);
  pinMode(PIN_ROTARY_BTN,INPUT_PULLUP);
  pinMode(PIN_PUSHBUTTON,INPUT_PULLUP);
- pinMode(PIN_PUSHBUTTON_LED, OUTPUT);
+ //pinMode(PIN_PUSHBUTTON_LED, OUTPUT);
 
  digitalWrite(PIN_PUSHBUTTON_LED, HIGH);
 
@@ -40,6 +47,8 @@ void setup() {
 }
 
 void loop() {
+
+  timeMillis = millis();
 
   /*
    * Read rotary push button 
@@ -100,6 +109,32 @@ void loop() {
    * Control LED
    */
   
-  
+  if (pushButtonLedMode == LED_MODE_OFF) {
+    pushButtonLedValue = 0;
+  } else if  (pushButtonLedMode == LED_MODE_ON) {
+    pushButtonLedValue = 255;
+  } else if (pushButtonLedMode == LED_MODE_BLINK) {
+    if (timeMillis > pushButtonLedNextActionAt) {
+      if (pushButtonLedValue == 0) {
+        pushButtonLedValue = 255;
+      } else {
+        pushButtonLedValue = 0;
+      }
+      pushButtonLedNextActionAt = pushButtonLedNextActionAt + LED_MODE_BLINK_INTERVAL;
+    }
+  } else if (pushButtonLedMode == LED_MODE_GLOW) {
+    if (timeMillis > pushButtonLedNextActionAt) {
+      if (pushButtonLedValue < 32) {
+        pushButtonLedValueDirection = 1;
+      } else if (pushButtonLedValue > (255-32)) {
+        pushButtonLedValueDirection = -1;
+      }
+      pushButtonLedValue += pushButtonLedValueDirection;
+      pushButtonLedNextActionAt = pushButtonLedNextActionAt + LED_MODE_GLOW_INTERVAL;
+    }
+    
+  }
+
+  analogWrite(PIN_PUSHBUTTON_LED, pushButtonLedValue);
 
 }
