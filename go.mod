@@ -14,6 +14,7 @@ require (
 	github.com/mattn/go-runewidth v0.0.4 // indirect
 	github.com/mikkyang/id3-go v0.0.0-20151201011346-0168d962f1d7
 	github.com/mitchellh/go-wordwrap v1.0.0 // indirect
+	github.com/nollbit/spotify v0.0.0-20190319124942-0c3aaca9f839
 	github.com/pyros2097/go-embed v0.0.0-20160412061840-4274f3450521 // indirect
 	github.com/shelmangroup/oidc-agent v0.0.0-20190301075438-63848772c93d
 	github.com/shuLhan/go-bindata v3.4.0+incompatible // indirect

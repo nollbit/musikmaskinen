@@ -3,8 +3,8 @@ package spotify
 import (
 	"time"
 
+	"github.com/nollbit/spotify"
 	log "github.com/sirupsen/logrus"
-	"github.com/zmb3/spotify"
 )
 
 const (
@@ -33,6 +33,7 @@ func WatchPlaylist(client *spotify.Client, playlistID spotify.ID, changes chan *
 			}
 
 			if playlist.SnapshotID != latestSnapshotID {
+				plLog.Debugf("New snapshot %s for playlist %s", playlist.SnapshotID, playlistID)
 				changes <- playlist
 				latestSnapshotID = playlist.SnapshotID
 			}

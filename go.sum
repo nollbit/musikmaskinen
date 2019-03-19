@@ -51,6 +51,8 @@ github.com/mikkyang/id3-go v0.0.0-20151201011346-0168d962f1d7/go.mod h1:6ReX25kz
 github.com/mitchellh/go-wordwrap v0.0.0-20150314170334-ad45545899c7/go.mod h1:ZXFpozHsX6DPmq2I0TCekCxypsnAUbP2oI0UX1GXzOo=
 github.com/mitchellh/go-wordwrap v1.0.0 h1:6GlHJ/LTGMrIJbwgdqdl2eEH8o+Exx/0m8ir9Gns0u4=
 github.com/mitchellh/go-wordwrap v1.0.0/go.mod h1:ZXFpozHsX6DPmq2I0TCekCxypsnAUbP2oI0UX1GXzOo=
+github.com/nollbit/spotify v0.0.0-20190319124942-0c3aaca9f839 h1:id6iBQH5N4pPtKwge2bGSkniWs7/M6CoKtiksmEnvBY=
+github.com/nollbit/spotify v0.0.0-20190319124942-0c3aaca9f839/go.mod h1:UiTK3rUpzNdksGIqp+bNF3TirlpNZjxq2xw0liP2v5A=
 github.com/nsf/termbox-go v0.0.0-20190121233118-02980233997d h1:x3S6kxmy49zXVVyhcnrFqxvNVCBPb2KZ9hV2RBdS840=
 github.com/nsf/termbox-go v0.0.0-20190121233118-02980233997d/go.mod h1:IuKpRQcYE1Tfu+oAQqaLisqDeXgjyyltCfsaoYN18NQ=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=

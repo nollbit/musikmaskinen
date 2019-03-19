@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"sort"
 	"time"
 
 	"github.com/nollbit/musikmaskinen/controller"
@@ -17,15 +16,13 @@ import (
 	"github.com/nollbit/musikmaskinen/spotify"
 
 	mmwidgets "github.com/nollbit/musikmaskinen/widgets"
-	sp "github.com/zmb3/spotify"
+	sp "github.com/nollbit/spotify"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 var (
 	command      = kingpin.Command("run", "Run the player").Default()
 	maxQueueSize = command.Flag("max-queue-size", "How many tracks can be enqueued?").Default("50").Int()
-
-	curatedPlaylistTracks []sp.FullTrack
 )
 
 func formatLength(l int) string {
@@ -94,10 +91,9 @@ func main() {
 	// stop any current playback, ignore error
 	spotifyClient.Pause()
 
-	curatedPlaylistChanges := make(chan *sp.FullPlaylist)
-	err = spotify.WatchPlaylist(spotifyClient, sp.ID(*spotify.SpotifyCuratedPlaylistID), curatedPlaylistChanges)
+	curatedPlaylist, err := spotify.NewCuratedPlaylist(spotifyClient, sp.ID(*spotify.SpotifyCuratedPlaylistID))
 	if err != nil {
-		log.WithError(err).Error("Unable to watch playlist")
+		log.WithError(err).Fatal("Unable to watch playlist")
 	}
 
 	if err := ui.Init(); err != nil {
@@ -186,8 +182,44 @@ func main() {
 	queueRefresh := time.NewTicker(time.Second / 10).C
 	bannerColorTicker := time.NewTicker(time.Second / 5).C
 	bannerTextTicker := time.NewTicker(time.Second * 15).C
+	curatedPlaylistTicker := time.NewTicker(time.Second * 15).C
 
 	ui.Render(grid)
+
+	renderPlaylistTitles := func() {
+		log.Debug("rendering titles")
+		// format the tracks for UI
+		formattedTracks := make([]string, 0, len(curatedPlaylist.Tracks))
+		for _, track := range curatedPlaylist.Tracks {
+			_, isBlacklisted := curatedPlaylist.IsTrackBlacklisted(track.ID)
+			var title string
+			if isBlacklisted {
+				title = fmt.Sprintf(" [%s](fg:white) - [%s](fg:yellow) [(recently played)](fg:white) ", track.Artists[0].Name, track.Name)
+			} else {
+				title = fmt.Sprintf(" [%s](fg:white,mod:bold) - [%s](fg:yellow,mod:bold) [(%s)](fg:white) ", track.Artists[0].Name, track.Name, formatLength(track.Duration/1000))
+			}
+			formattedTracks = append(formattedTracks, title)
+		}
+
+		uiTrackList.Rows = formattedTracks
+	}
+
+	queueSelectedTrack := func() {
+		currentlySelectedTrack := curatedPlaylist.Tracks[uiTrackList.SelectedRow]
+
+		_, isBlacklisted := curatedPlaylist.IsTrackBlacklisted(currentlySelectedTrack.ID)
+		if isBlacklisted {
+			return
+		}
+
+		if player.QueueFull() {
+			return
+		}
+
+		curatedPlaylist.BlacklistTrack(currentlySelectedTrack.ID, 30*time.Minute)
+		player.QueueAdd(currentlySelectedTrack)
+		renderPlaylistTitles()
+	}
 
 	uiEvents := ui.PollEvents()
 	for {
@@ -200,10 +232,7 @@ func main() {
 				case controller.EventCmdRotaryEncoderCounterClockwise:
 					uiTrackList.ScrollUp()
 				case controller.EventCmdPushButton:
-					if !player.QueueFull() {
-						currentlySelectedTrack := curatedPlaylistTracks[uiTrackList.SelectedRow]
-						player.QueueAdd(currentlySelectedTrack)
-					}
+					queueSelectedTrack()
 				}
 			}
 		case controllerErr := <-cntrl.Errs:
@@ -222,10 +251,7 @@ func main() {
 			case "j", "<Up>":
 				uiTrackList.ScrollUp()
 			case "<Enter>":
-				if !player.QueueFull() {
-					currentlySelectedTrack := curatedPlaylistTracks[uiTrackList.SelectedRow]
-					player.QueueAdd(currentlySelectedTrack)
-				}
+				queueSelectedTrack()
 			case "s":
 				player.Skip()
 			}
@@ -264,7 +290,7 @@ func main() {
 		case trackEvent := <-player.TrackEvents:
 			// the periodic (>1 event per second) player update
 			{
-				log.Debugf("Got trackEvent %v", trackEvent)
+				//log.Debugf("Got trackEvent %v", trackEvent)
 				var currentTrack string
 				var gaugeLabel string
 				var gaugePercent int
@@ -291,26 +317,12 @@ func main() {
 				uiTrackPlayerGauge.Label = gaugeLabel
 				uiTrackPlayerGauge.Percent = gaugePercent
 			}
-		case curatedPlaylist := <-curatedPlaylistChanges:
+		case <-curatedPlaylist.Changes:
+			// nope
+			renderPlaylistTitles()
+		case <-curatedPlaylistTicker:
 			// the curated playlist changed
-			{
-				plTracks := curatedPlaylist.Tracks.Tracks
-				newCuratedPlaylistTracks := make([]sp.FullTrack, 0, len(plTracks))
-				for _, plTrack := range plTracks {
-					newCuratedPlaylistTracks = append(newCuratedPlaylistTracks, plTrack.Track)
-				}
-
-				// sort by first artist name, track name desc
-				sort.Slice(newCuratedPlaylistTracks, func(i, j int) bool {
-					if newCuratedPlaylistTracks[i].Artists[0].Name != newCuratedPlaylistTracks[j].Artists[0].Name {
-						return newCuratedPlaylistTracks[i].Artists[0].Name < newCuratedPlaylistTracks[j].Artists[0].Name
-					}
-					return newCuratedPlaylistTracks[i].Name < newCuratedPlaylistTracks[j].Name
-				})
-
-				curatedPlaylistTracks = newCuratedPlaylistTracks
-				uiTrackList.Rows = titles(curatedPlaylistTracks)
-			}
+			renderPlaylistTitles()
 		}
 
 	}
