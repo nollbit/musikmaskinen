@@ -1,9 +1,11 @@
+#include <ButtonDebounce.h>
+
 const int LED_MODE_OFF = 0;
 const int LED_MODE_ON = 1;
 const int LED_MODE_GLOW = 2;
 const int LED_MODE_BLINK = 3;
 
-const int LED_MODE_BLINK_INTERVAL = 2000;
+const int LED_MODE_BLINK_INTERVAL = 1000;
 const int LED_MODE_GLOW_INTERVAL = 25;
 
 
@@ -18,11 +20,15 @@ int rotaryBtnLast;
 int rotaryPinAValue;
 int rotaryButtonValue;
 
+ButtonDebounce rotaryButton(PIN_ROTARY_BTN, 80);
+ButtonDebounce pushButton(PIN_PUSHBUTTON, 80);
+
+
 int rotaryRotation = 0;
 
 int pushButtonValue;
 int pushButtonLast;
-int pushButtonLedMode = LED_MODE_GLOW;
+int pushButtonLedMode = LED_MODE_BLINK;
 int pushButtonLedValue = 0;
 int pushButtonLedValueDirection = 1;
 
@@ -33,9 +39,6 @@ void setup() {
   
  pinMode(PIN_ROTARY_A,INPUT);
  pinMode(PIN_ROTARY_B,INPUT);
- pinMode(PIN_ROTARY_BTN,INPUT_PULLUP);
- pinMode(PIN_PUSHBUTTON,INPUT_PULLUP);
- //pinMode(PIN_PUSHBUTTON_LED, OUTPUT);
 
  digitalWrite(PIN_PUSHBUTTON_LED, HIGH);
 
@@ -43,38 +46,49 @@ void setup() {
  rotaryBtnLast = digitalRead(PIN_ROTARY_BTN);
  pushButtonLast = digitalRead(PIN_PUSHBUTTON);
  
+ rotaryButton.setCallback(rotaryButtonChanged);
+ pushButton.setCallback(pushButtonChanged);
+
  Serial.begin(9600);
 }
 
-void loop() {
+void rotaryButtonChanged(const int state){
+  if (state == 0) {
+    Serial.print("C");
+  }
+}
 
+void pushButtonChanged(const int state){
+  if (state == 0) {
+    Serial.print("P");
+  }
+}
+
+void loop() {
+  rotaryButton.update();
+  pushButton.update();
+  
   timeMillis = millis();
 
   /*
-   * Read rotary push button 
+   * Read commands from serial
    */
-  rotaryButtonValue = digitalRead(PIN_ROTARY_BTN);
-  if (rotaryButtonValue != rotaryBtnLast) {
-    if (rotaryButtonValue == 0) {
-      Serial.print ("Btn press\n");
-    } else {
-      Serial.print ("Btn release\n");
-    }
-    rotaryBtnLast = rotaryButtonValue;
-  }
 
-  /*
-   * Read large push button
-   */
-  pushButtonValue = digitalRead(PIN_PUSHBUTTON);
-  if (pushButtonValue != pushButtonLast) {
-    if (pushButtonValue == 0) {
-      Serial.print ("Btn large press\n");
-    } else {
-      Serial.print ("Btn large release\n");
+   while(Serial.available()) {
+    int cmd = Serial.read();
+    Serial.println(cmd);
+    switch (cmd) {
+      case 66: // "B"
+        pushButtonLedMode = LED_MODE_BLINK;
+        break;
+      case 71: // "G"
+        pushButtonLedMode = LED_MODE_GLOW;
+        break;
+      case 79: // "O"
+        pushButtonLedMode = LED_MODE_OFF;
+        break;
     }
-    pushButtonLast = pushButtonValue;
-  }
+   }
 
   /*
    * Read rotary encoder
@@ -86,20 +100,16 @@ void loop() {
     // We do that by reading pin B.
     if (digitalRead(PIN_ROTARY_B) != rotaryPinAValue) { 
       // Means pin A Changed first - We're Rotating Clockwise
-      //rotaryRotationIsClockwise = true;
       rotaryRotation++;
     } else {
       // Otherwise B changed first and we're moving CCW
-      //rotaryRotationIsClockwise = false;
       rotaryRotation--;
     }
     if (rotaryRotation == 2){
-      Serial.print ("Rotated: ");
-      Serial.println ("clockwise");
+      Serial.print ("C");
       rotaryRotation = 0;
     } else if (rotaryRotation == -2) {
-      Serial.print ("Rotated: ");
-      Serial.println("counterclockwise");
+      Serial.print ("W");
       rotaryRotation = 0;
     }
   }
@@ -116,7 +126,7 @@ void loop() {
   } else if (pushButtonLedMode == LED_MODE_BLINK) {
     if (timeMillis > pushButtonLedNextActionAt) {
       if (pushButtonLedValue == 0) {
-        pushButtonLedValue = 255;
+        pushButtonLedValue = 1;
       } else {
         pushButtonLedValue = 0;
       }
