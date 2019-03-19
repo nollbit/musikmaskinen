@@ -140,7 +140,7 @@ func main() {
 
 	uiQueueTable := widgets.NewTable()
 	uiQueueTable.Rows = [][]string{
-		[]string{"   ", " Artist", " Title", " Dur.", " Wait"},
+		[]string{"   ", " Track", " Dur.", " Wait"},
 	}
 	uiQueueTable.TextStyle = ui.NewStyle(ui.ColorWhite)
 	uiQueueTable.RowSeparator = true
@@ -148,9 +148,7 @@ func main() {
 
 	uiQueueTable.ColumnResizer = func() {
 		widthLeft := uiQueueTable.Inner.Dx() - 20
-		columnWidth := widthLeft / 2
-
-		uiQueueTable.ColumnWidths = []int{3, columnWidth, columnWidth, 6, 7}
+		uiQueueTable.ColumnWidths = []int{3, widthLeft, 6, 7}
 	}
 
 	uiTrackInfo := widgets.NewParagraph()
@@ -170,13 +168,15 @@ func main() {
 
 	grid.Set(
 		ui.NewRow(1.0,
-			ui.NewCol(0.4,
+			// left UI column
+			ui.NewCol(0.5,
 				ui.NewRow(0.2, uiUsage),
 				ui.NewRow(0.8, uiTrackList),
 			),
-			ui.NewCol(0.6,
+			// right UI column
+			ui.NewCol(0.4,
 				ui.NewRow(0.2, uiTrackInfo),
-				ui.NewRow(0.1, uiTrackPlayerGauge),
+				ui.NewRow(0.1, uiTrackPlayerGauge), // progress bar for current song
 				ui.NewRow(0.7, uiQueueTable),
 			),
 		),
@@ -246,14 +246,13 @@ func main() {
 			{
 
 				rows := [][]string{
-					[]string{"   ", " Artist", " Title", " Dur.", " Wait"},
+					[]string{"   ", " Track", " Dur.", " Wait"},
 				}
 
 				for i, qs := range player.GetQueue() {
 					row := []string{
 						fmt.Sprintf(" %d ", i+1),
-						fmt.Sprintf(" [%s](fg:white,mod:bold) ", qs.Track.Artists[0].Name),
-						fmt.Sprintf(" [%s](fg:white,mod:bold) ", qs.Track.Name),
+						fmt.Sprintf(" [%s](fg:white,mod:bold) - [%s](fg:white,mod:bold)", qs.Track.Artists[0].Name, qs.Track.Name),
 						fmt.Sprintf(" %s ", formatLength(qs.Track.Duration/1000)),
 						fmt.Sprintf(" %s ", formatLength(qs.TimeUntilStart)),
 					}
