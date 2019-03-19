@@ -8,6 +8,7 @@ require (
 	github.com/go-test/deep v1.0.1
 	github.com/hajimehoshi/go-mp3 v0.1.1
 	github.com/hajimehoshi/oto v0.3.0
+	github.com/jacobsa/go-serial v0.0.0-20180131005756-15cf729a72d4
 	github.com/lukesampson/figlet v0.0.0-20190211215653-8a3ef4a6ac42
 	github.com/maruel/panicparse v1.1.1 // indirect
 	github.com/mattn/go-runewidth v0.0.4 // indirect

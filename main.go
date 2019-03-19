@@ -6,6 +6,8 @@ import (
 	"sort"
 	"time"
 
+	"github.com/nollbit/musikmaskinen/controller"
+
 	"github.com/lukesampson/figlet/figletlib"
 	log "github.com/sirupsen/logrus"
 
@@ -85,7 +87,7 @@ func main() {
 	}
 
 	if !hasActiveDevice {
-		fmt.Println("No active device")
+		fmt.Println("No active spotify device")
 		os.Exit(1)
 	}
 
@@ -102,6 +104,13 @@ func main() {
 		log.Fatalf("failed to initialize termui: %v", err)
 	}
 	defer ui.Close()
+
+	cntrl, err := controller.NewController()
+	if err != nil {
+		log.WithError(err).Warn("Unable to open controller, disabling")
+		// create dummy controller
+		cntrl = controller.NewDummyController()
+	}
 
 	termWidth, termHeight := ui.TerminalDimensions()
 
@@ -173,8 +182,6 @@ func main() {
 		),
 	)
 
-	//go Run()
-
 	ticker := time.NewTicker(time.Second / 30).C
 	queueRefresh := time.NewTicker(time.Second / 10).C
 	bannerColorTicker := time.NewTicker(time.Second / 5).C
@@ -185,6 +192,22 @@ func main() {
 	uiEvents := ui.PollEvents()
 	for {
 		select {
+		case controllerCommand := <-cntrl.CommandEvents:
+			{
+				switch controllerCommand {
+				case controller.EventCmdRotaryEncoderClockwise:
+					uiTrackList.ScrollDown()
+				case controller.EventCmdRotaryEncoderCounterClockwise:
+					uiTrackList.ScrollUp()
+				case controller.EventCmdPushButton:
+					if !player.QueueFull() {
+						currentlySelectedTrack := curatedPlaylistTracks[uiTrackList.SelectedRow]
+						player.QueueAdd(currentlySelectedTrack)
+					}
+				}
+			}
+		case controllerErr := <-cntrl.Errs:
+			log.WithError(controllerErr).Fatal("Controller failure")
 		case e := <-uiEvents:
 			switch e.ID {
 			case "q", "<C-c>":
