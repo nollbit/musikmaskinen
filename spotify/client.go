@@ -20,7 +20,7 @@ var (
 
 	SpotifyCuratedPlaylistID = kingpin.
 					Flag("spotify-curated-playlist", "The playlist from which people can select tracks. Must belong to the logged in user.").
-					Default("0ETO6cNQanxk8vr8GonBEG").
+					Default("5qpgQ7n2oPEw71GrLLnt85").
 					String()
 
 	oauthCallbackPort = kingpin.Flag("oauth-callback-port", "Where to redirect the user after login").Default("4040").Int()
