@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/nollbit/musikmaskinen/controller"
@@ -125,8 +126,6 @@ func main() {
 
 	uiUsage := widgets.NewParagraph()
 	uiUsage.Title = "Instruction"
-	uiUsage.Text = fmt.Sprintf(" Select a track using the rotary wheel before you!\n Press it to queue the selected track \n Only %d tracks can be queued at a time", *maxQueueSize)
-	uiHeader.TextStyle = ui.NewStyle(ui.ColorWhite, ui.ColorBlack, ui.ModifierBold)
 
 	uiTrackList := widgets.NewList()
 	uiTrackList.Title = "Tracks"
@@ -207,6 +206,30 @@ func main() {
 
 		uiQueueTable.BorderStyle = ui.NewStyle(ui.ColorGreen)
 	}
+
+	updateInstructions := func() {
+		var sb strings.Builder
+
+		sb.WriteString("\n")
+		sb.WriteString(" How to select a song:\n")
+		sb.WriteString("  1. Move to the song with the [scroll wheel](mod:bold)\n")
+		sb.WriteString("  2. Push the [blinking button to the right](mod:bold)\n")
+		sb.WriteString("\n")
+
+		if player.QueueFull() {
+			sb.WriteString("[The queue is now full. Please wait](mod:bold)\n")
+		} else {
+			spaceLeftInQueue := *maxQueueSize - len(player.GetQueue())
+			formattedQueueSpace := fmt.Sprintf("%d", spaceLeftInQueue)
+			if spaceLeftInQueue == 1 {
+				formattedQueueSpace = "one"
+			}
+			sb.WriteString(fmt.Sprintf("There can only be [%d](mod:bold) tracks in the queue ([%s](mod:bold) more can be added)\n", *maxQueueSize, formattedQueueSpace))
+		}
+
+		uiUsage.Text = sb.String()
+	}
+	updateInstructions()
 
 	renderPlaylistTitles := func() {
 		log.Debug("rendering titles")
@@ -314,6 +337,8 @@ func main() {
 				} else {
 					queusIsNowOpen()
 				}
+
+				updateInstructions()
 			}
 		case trackEvent := <-player.TrackEvents:
 			// the periodic (>1 event per second) player update
