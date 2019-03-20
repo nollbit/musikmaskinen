@@ -120,12 +120,10 @@ func main() {
 
 	uiUsage := widgets.NewParagraph()
 	uiUsage.Title = "Instruction"
-	//uiUsage.TitleStyle = ui.NewStyle(ui.ColorWhite, ui.ColorBlack, ui.ModifierBold)
 	uiUsage.TextStyle = ui.NewStyle(ui.ColorWhite, ui.ColorBlack, ui.ModifierBold)
 
 	uiTrackList := widgets.NewList()
 	uiTrackList.Title = "Tracks"
-	//uiTrackList.TitleStyle = ui.NewStyle(ui.ColorWhite, ui.ColorBlack, ui.ModifierBold)
 	uiTrackList.TextStyle = ui.NewStyle(ui.ColorYellow)
 	uiTrackList.SelectedRowStyle = ui.NewStyle(ui.ColorBlack, ui.ColorYellow, ui.ModifierBold)
 	uiTrackList.WrapText = false
@@ -138,7 +136,6 @@ func main() {
 	uiQueueTable.RowSeparator = true
 	uiQueueTable.FillRow = true
 	uiQueueTable.Title = "Queue"
-	uiQueueTable.TitleStyle = ui.NewStyle(ui.ColorWhite, ui.ColorBlack, ui.ModifierBold)
 
 	uiQueueTable.ColumnResizer = func() {
 		widthLeft := uiQueueTable.Inner.Dx() - 17
@@ -147,13 +144,11 @@ func main() {
 
 	uiTrackInfo := widgets.NewParagraph()
 	uiTrackInfo.Title = "Current Track"
-	//uiTrackInfo.TitleStyle = ui.NewStyle(ui.ColorWhite, ui.ColorBlack, ui.ModifierBold)
 	uiTrackInfo.Text = ""
 	uiTrackInfo.WrapText = false
 
 	uiTrackPlayerGauge := widgets.NewGauge()
 	uiTrackPlayerGauge.Title = "Playing"
-	//uiTrackPlayerGauge.TitleStyle = ui.NewStyle(ui.ColorWhite, ui.ColorBlack, ui.ModifierBold)
 	uiTrackPlayerGauge.Percent = 0
 	uiTrackPlayerGauge.LabelStyle = ui.NewStyle(ui.ColorWhite, ui.ColorBlack)
 	uiTrackPlayerGauge.Label = "<3!"
@@ -165,12 +160,12 @@ func main() {
 	grid.Set(
 		ui.NewRow(1.0,
 			// left UI column
-			ui.NewCol(0.5,
+			ui.NewCol(0.6,
 				ui.NewRow(0.2, uiUsage),
 				ui.NewRow(0.8, uiTrackList),
 			),
 			// right UI column
-			ui.NewCol(0.5,
+			ui.NewCol(0.4,
 				ui.NewRow(0.2, uiTrackInfo),
 				ui.NewRow(0.1, uiTrackPlayerGauge), // progress bar for current song
 				ui.NewRow(0.7, uiQueueTable),
@@ -394,7 +389,7 @@ func main() {
 
 					template := `
 					 [Artist](fg:blue,mod:bold):   [%s](fg:white,mod:bold)
-					 [Title](fg:blue,mod:bold):    [%s](fg:white,mod:bold)
+					 [Title](fg:blue,mod:bold):    [%s](fg:yellow,mod:bold)
 					 [Album](fg:blue,mod:bold):    [%s](fg:white,mod:bold)`
 
 					currentTrack = fmt.Sprintf(template, s.Artists[0].Name, s.Name, s.Album.Name)
