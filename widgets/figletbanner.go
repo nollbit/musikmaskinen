@@ -23,14 +23,6 @@ func NewFigletBanner() *FigletBanner {
 }
 
 var (
-	/*
-		fadeColors = []termui.Color{
-			16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30,
-			31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45,
-			46, 45, 44, 43, 42, 41, 40, 39, 38, 37, 36, 35, 34, 33, 32,
-			31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17,
-		}
-	*/
 	fadeColors []termui.Color
 )
 
@@ -57,10 +49,6 @@ func (f *FigletBanner) Draw(buf *termui.Buffer) {
 
 	settings := f.FigletFont.Settings()
 	renderedText := figletlib.SprintMsg(f.Text, f.FigletFont, f.Inner.Max.X, settings, "center")
-
-	//cells := termui.ParseStyles(renderedText, self.TextStyle)
-
-	//rows := termui.SplitCells(cells, '\n')
 
 	rows := f.cyclicHoriFade(renderedText)
 
