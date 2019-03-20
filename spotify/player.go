@@ -140,6 +140,8 @@ func (p *Player) playNextTrackIfNotAlready() {
 		panic(err)
 	}
 
+	p.queueChanged()
+
 	p.playing = nextTrack
 
 	for {

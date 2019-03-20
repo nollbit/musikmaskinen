@@ -172,7 +172,7 @@ func main() {
 	)
 
 	ticker := time.NewTicker(time.Second / 30).C
-	queueRefresh := time.NewTicker(time.Second / 10).C
+	queueTicker := time.NewTicker(time.Second / 10).C
 	bannerColorTicker := time.NewTicker(time.Second / 5).C
 	bannerTextTicker := time.NewTicker(time.Second * 15).C
 	curatedPlaylistTicker := time.NewTicker(time.Second * 15).C
@@ -336,7 +336,16 @@ func main() {
 				}*/
 			uiHeader.FadeOffset = (uiHeader.FadeOffset + 1) % 200
 			ui.Render(uiHeader)
-		case <-queueRefresh:
+		case <-player.QueueEvents:
+			{
+				if player.QueueFull() {
+					queusIsNowFull()
+				} else {
+					queusIsNowOpen()
+				}
+
+			}
+		case <-queueTicker:
 			{
 
 				rows := [][]string{
@@ -354,12 +363,6 @@ func main() {
 				}
 
 				uiQueueTable.Rows = rows
-
-				if player.QueueFull() {
-					queusIsNowFull()
-				} else {
-					queusIsNowOpen()
-				}
 
 				updateInstructions()
 			}
