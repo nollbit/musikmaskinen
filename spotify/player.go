@@ -83,11 +83,8 @@ func (p *Player) QueueRemove() error {
 }
 
 func (p *Player) IsInQueue(trackID spotify.ID) bool {
-	log.Debugf("IsInQueue len = %d", len(p.GetQueue()))
 	for _, t := range p.GetQueue() {
-		log.Debugf("%s == %s", t.Track.ID, trackID)
 		if t.Track.ID == trackID {
-			log.Debugf("%s == %s!", t.Track.ID, trackID)
 			return true
 		}
 	}
