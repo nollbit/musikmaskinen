@@ -23,7 +23,7 @@ import (
 
 var (
 	command      = kingpin.Command("run", "Run the player").Default()
-	maxQueueSize = command.Flag("max-queue-size", "How many tracks can be enqueued?").Default("50").Int()
+	maxQueueSize = command.Flag("max-queue-size", "How many tracks can be enqueued?").Default("5").Int()
 )
 
 func formatLength(l int) string {
@@ -255,11 +255,14 @@ func main() {
 	renderPlaylistTitles := func() {
 		log.Debug("rendering titles")
 		// format the tracks for UI
+
 		formattedTracks := make([]string, 0, len(curatedPlaylist.Tracks))
 		for _, track := range curatedPlaylist.Tracks {
 			_, isBlacklisted := curatedPlaylist.IsTrackBlacklisted(track.ID)
 			var title string
-			if isBlacklisted {
+			if player.IsInQueue(track.ID) {
+				title = fmt.Sprintf(" [%s](fg:white) - [%s](fg:yellow) [(in queue)](fg:white) ", track.Artists[0].Name, track.Name)
+			} else if isBlacklisted {
 				title = fmt.Sprintf(" [%s](fg:white) - [%s](fg:yellow) [(recently played)](fg:white) ", track.Artists[0].Name, track.Name)
 			} else {
 				title = fmt.Sprintf(" [%s](fg:white,mod:bold) - [%s](fg:yellow,mod:bold) [(%s)](fg:white) ", track.Artists[0].Name, track.Name, formatLength(track.Duration/1000))
