@@ -120,6 +120,7 @@ func main() {
 
 	uiUsage := widgets.NewParagraph()
 	uiUsage.Title = "Instruction"
+	uiUsage.TextStyle = ui.NewStyle(ui.ColorWhite, ui.ColorBlack, ui.ModifierBold)
 
 	uiTrackList := widgets.NewList()
 	uiTrackList.Title = "Tracks"
@@ -238,8 +239,8 @@ func main() {
 		var sb strings.Builder
 
 		sb.WriteString(" How to select a song:\n")
-		sb.WriteString("  1. Move to the song with the [scroll wheel](mod:bold)\n")
-		sb.WriteString("  2. Push the [blinking button to the right](mod:bold)\n")
+		sb.WriteString("  1. Move to the song with the [scroll wheel](fg:yellow,mod:bold)\n")
+		sb.WriteString("  2. Push the [blinking button to the right](fg:yellow,mod:bold)\n")
 		sb.WriteString("\n")
 
 		if player.QueueFull() {
@@ -256,11 +257,15 @@ func main() {
 		log.Debug("rendering titles")
 		// format the tracks for UI
 
+		currentlyPlayingTrack := player.CurrentlyPlaying()
+
 		formattedTracks := make([]string, 0, len(curatedPlaylist.Tracks))
 		for _, track := range curatedPlaylist.Tracks {
 			_, isBlacklisted := curatedPlaylist.IsTrackBlacklisted(track.ID)
 			var title string
-			if player.IsInQueue(track.ID) {
+			if currentlyPlayingTrack != nil && currentlyPlayingTrack.ID == track.ID {
+				title = fmt.Sprintf(" [%s](fg:white) - [%s](fg:yellow) [(playing)](fg:white) ", track.Artists[0].Name, track.Name)
+			} else if player.IsInQueue(track.ID) {
 				title = fmt.Sprintf(" [%s](fg:white) - [%s](fg:yellow) [(in queue)](fg:white) ", track.Artists[0].Name, track.Name)
 			} else if isBlacklisted {
 				title = fmt.Sprintf(" [%s](fg:white) - [%s](fg:yellow) [(recently played)](fg:white) ", track.Artists[0].Name, track.Name)
