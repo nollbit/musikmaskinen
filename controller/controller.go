@@ -47,6 +47,10 @@ type (
 )
 
 func (c *Controller) WriteCommand(b byte) error {
+	if c.port == nil {
+		log.Debugf("Dummy controller not sending command %b", b)
+		return nil
+	}
 	log.Debugf("Sending command %b to controller", b)
 	_, err := c.port.Write([]byte{b})
 	return err

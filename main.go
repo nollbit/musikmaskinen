@@ -186,6 +186,28 @@ func main() {
 
 	ui.Render(grid)
 
+	// triggered when queue is full
+	queusIsNowFull := func() {
+		// stop the blinking light on the controlleer
+		err := cntrl.WriteCommand(controller.CommandLedOff)
+		if err != nil {
+			log.WithError(err).Errorf("Unable to send command to controller")
+		}
+
+		uiQueueTable.BorderStyle = ui.NewStyle(ui.ColorRed)
+	}
+
+	// triggered when queue is open!
+	queusIsNowOpen := func() {
+		// start the blinking light on the controlleer
+		err := cntrl.WriteCommand(controller.CommandLedBlink)
+		if err != nil {
+			log.WithError(err).Errorf("Unable to send command to controller")
+		}
+
+		uiQueueTable.BorderStyle = ui.NewStyle(ui.ColorGreen)
+	}
+
 	renderPlaylistTitles := func() {
 		log.Debug("rendering titles")
 		// format the tracks for UI
@@ -286,6 +308,12 @@ func main() {
 				}
 
 				uiQueueTable.Rows = rows
+
+				if player.QueueFull() {
+					queusIsNowFull()
+				} else {
+					queusIsNowOpen()
+				}
 			}
 		case trackEvent := <-player.TrackEvents:
 			// the periodic (>1 event per second) player update
