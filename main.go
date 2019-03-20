@@ -218,7 +218,7 @@ func main() {
 					rd := track.Album.ReleaseDate
 					if len(rd) >= 4 {
 						year := rd[0:4]
-						headerText = fmt.Sprintf("PARTY LIKE IT'S %s!", year)
+						headerText = fmt.Sprintf("PARTY LIKE ITS %s!", year)
 					} else {
 						headerText = "MUSIKMASKINEN"
 					}
