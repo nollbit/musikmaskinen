@@ -54,7 +54,7 @@ void setup() {
 
 void rotaryButtonChanged(const int state){
   if (state == 0) {
-    Serial.print("C");
+    Serial.print("D");
   }
 }
 

@@ -32,7 +32,7 @@ const (
 	EventCmdRotaryEncoderCounterClockwise = byte('C')
 
 	// EventCmdRotaryEncoderButton means that the rotary knob was wash pushed
-	EventCmdRotaryEncoderButton = byte('C')
+	EventCmdRotaryEncoderButton = byte('D')
 
 	// EventCmdPushButton means that the push button was pushed
 	EventCmdPushButton = byte('P')
