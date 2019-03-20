@@ -163,7 +163,7 @@ func main() {
 				ui.NewRow(0.8, uiTrackList),
 			),
 			// right UI column
-			ui.NewCol(0.4,
+			ui.NewCol(0.5,
 				ui.NewRow(0.2, uiTrackInfo),
 				ui.NewRow(0.1, uiTrackPlayerGauge), // progress bar for current song
 				ui.NewRow(0.7, uiQueueTable),
