@@ -180,6 +180,25 @@ func main() {
 
 	ui.Render(grid)
 
+	// updates the instructions box based on queue status
+	updateInstructions := func() {
+		var sb strings.Builder
+
+		sb.WriteString(" How to select a song:\n")
+		sb.WriteString("  1. Move to the song with the [scroll wheel](fg:yellow,mod:bold)\n")
+		sb.WriteString("  2. Push the [blinking button to the right](fg:yellow,mod:bold)\n")
+		sb.WriteString("\n")
+
+		if player.QueueFull() {
+			sb.WriteString(" [ >>>>>>> The queue is now full. Please wait <<<<<<< ](fg:white,bg:red,mod:bold)\n")
+		} else {
+			sb.WriteString(fmt.Sprintf(" There can only be [%d](mod:bold) tracks in the queue. One per person please!\n", *maxQueueSize))
+		}
+
+		uiUsage.Text = sb.String()
+	}
+	updateInstructions()
+
 	// triggered when queue is full
 	queusIsNowFull := func() {
 		// stop the blinking light on the controlleer
@@ -188,7 +207,7 @@ func main() {
 			log.WithError(err).Errorf("Unable to send command to controller")
 		}
 
-		//uiQueueTable.BorderStyle = ui.NewStyle(ui.ColorRed)
+		updateInstructions()
 	}
 
 	// triggered when queue is open!
@@ -199,7 +218,7 @@ func main() {
 			log.WithError(err).Errorf("Unable to send command to controller")
 		}
 
-		//uiQueueTable.BorderStyle = ui.NewStyle(ui.ColorGreen)
+		updateInstructions()
 	}
 
 	// update the header text
@@ -233,25 +252,6 @@ func main() {
 		headerTextIndex = (headerTextIndex + 1) % 3
 	}
 	updateHeaderText()
-
-	// updates the instructions box based on queue status
-	updateInstructions := func() {
-		var sb strings.Builder
-
-		sb.WriteString(" How to select a song:\n")
-		sb.WriteString("  1. Move to the song with the [scroll wheel](fg:yellow,mod:bold)\n")
-		sb.WriteString("  2. Push the [blinking button to the right](fg:yellow,mod:bold)\n")
-		sb.WriteString("\n")
-
-		if player.QueueFull() {
-			sb.WriteString(" [The queue is now full. Please wait](mod:bold)\n")
-		} else {
-			sb.WriteString(fmt.Sprintf(" There can only be [%d](mod:bold) tracks in the queue. One per person please!\n", *maxQueueSize))
-		}
-
-		uiUsage.Text = sb.String()
-	}
-	updateInstructions()
 
 	renderPlaylistTitles := func() {
 		log.Debug("rendering titles")
@@ -293,6 +293,7 @@ func main() {
 		curatedPlaylist.BlacklistTrack(currentlySelectedTrack.ID, 60*time.Minute)
 
 		player.QueueAdd(currentlySelectedTrack)
+
 		renderPlaylistTitles()
 	}
 
@@ -371,8 +372,6 @@ func main() {
 				}
 
 				uiQueueTable.Rows = rows
-
-				updateInstructions()
 			}
 		case trackEvent := <-player.TrackEvents:
 			// the periodic (>1 event per second) player update
