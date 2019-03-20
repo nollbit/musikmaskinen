@@ -111,13 +111,7 @@ func main() {
 
 	termWidth, termHeight := ui.TerminalDimensions()
 
-	headerTexts := []string{
-		"MUSIKMASKINEN",
-		"RICKARD 40",
-	}
-	headerTextIndex := 0
 	uiHeader := mmwidgets.NewFigletBanner()
-	uiHeader.Text = headerTexts[headerTextIndex]
 	uiHeader.FigletFont = font
 	uiHeader.TextStyle = ui.NewStyle(40)
 	uiHeader.Border = false
@@ -207,6 +201,39 @@ func main() {
 		uiQueueTable.BorderStyle = ui.NewStyle(ui.ColorGreen)
 	}
 
+	// update the header text
+	headerTextIndex := 0
+	updateHeaderText := func() {
+		var headerText string
+
+		switch headerTextIndex {
+		case 0:
+			headerText = "MUSIKMASKINEN"
+		case 1:
+			headerText = "RICKARD 40"
+		case 2:
+			{
+				track := player.CurrentlyPlaying()
+				if track != nil {
+					rd := track.Album.ReleaseDate
+					if len(rd) >= 4 {
+						year := rd[0:4]
+						headerText = fmt.Sprintf("PARTY LIKE %s!", year)
+					} else {
+						headerText = "MUSIKMASKINEN"
+					}
+				} else {
+					headerText = "MUSIKMASKINEN"
+				}
+			}
+		}
+
+		uiHeader.Text = headerText
+		headerTextIndex = (headerTextIndex + 1) % 3
+	}
+	updateHeaderText()
+
+	// updates the instructions box based on queue status
 	updateInstructions := func() {
 		var sb strings.Builder
 
@@ -303,8 +330,7 @@ func main() {
 		case <-ticker:
 			ui.Render(grid)
 		case <-bannerTextTicker:
-			headerTextIndex++
-			uiHeader.Text = headerTexts[headerTextIndex%len(headerTexts)]
+			updateHeaderText()
 
 		case <-bannerColorTicker:
 			if uiHeader.TextStyle.Fg == 46 {

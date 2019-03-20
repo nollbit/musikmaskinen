@@ -82,6 +82,10 @@ func (p *Player) QueueRemove() error {
 	return nil
 }
 
+func (p *Player) CurrentlyPlaying() *spotify.FullTrack {
+	return p.playing
+}
+
 func (p *Player) Skip() error {
 	if p.State != StatePlaying {
 		return nil
