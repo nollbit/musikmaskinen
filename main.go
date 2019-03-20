@@ -187,7 +187,7 @@ func main() {
 			log.WithError(err).Errorf("Unable to send command to controller")
 		}
 
-		uiQueueTable.BorderStyle = ui.NewStyle(ui.ColorRed)
+		//uiQueueTable.BorderStyle = ui.NewStyle(ui.ColorRed)
 	}
 
 	// triggered when queue is open!
@@ -198,7 +198,7 @@ func main() {
 			log.WithError(err).Errorf("Unable to send command to controller")
 		}
 
-		uiQueueTable.BorderStyle = ui.NewStyle(ui.ColorGreen)
+		//uiQueueTable.BorderStyle = ui.NewStyle(ui.ColorGreen)
 	}
 
 	// update the header text
@@ -218,7 +218,7 @@ func main() {
 					rd := track.Album.ReleaseDate
 					if len(rd) >= 4 {
 						year := rd[0:4]
-						headerText = fmt.Sprintf("PARTY LIKE %s!", year)
+						headerText = fmt.Sprintf("PARTY LIKE IT'S %s!", year)
 					} else {
 						headerText = "MUSIKMASKINEN"
 					}
@@ -237,21 +237,15 @@ func main() {
 	updateInstructions := func() {
 		var sb strings.Builder
 
-		sb.WriteString("\n")
 		sb.WriteString(" How to select a song:\n")
 		sb.WriteString("  1. Move to the song with the [scroll wheel](mod:bold)\n")
 		sb.WriteString("  2. Push the [blinking button to the right](mod:bold)\n")
 		sb.WriteString("\n")
 
 		if player.QueueFull() {
-			sb.WriteString("[The queue is now full. Please wait](mod:bold)\n")
+			sb.WriteString(" [The queue is now full. Please wait](mod:bold)\n")
 		} else {
-			spaceLeftInQueue := *maxQueueSize - len(player.GetQueue())
-			formattedQueueSpace := fmt.Sprintf("%d", spaceLeftInQueue)
-			if spaceLeftInQueue == 1 {
-				formattedQueueSpace = "one"
-			}
-			sb.WriteString(fmt.Sprintf("There can only be [%d](mod:bold) tracks in the queue ([%s](mod:bold) more can be added)\n", *maxQueueSize, formattedQueueSpace))
+			sb.WriteString(fmt.Sprintf(" There can only be [%d](mod:bold) tracks in the queue. One per person please!\n", *maxQueueSize))
 		}
 
 		uiUsage.Text = sb.String()
@@ -288,7 +282,8 @@ func main() {
 			return
 		}
 
-		curatedPlaylist.BlacklistTrack(currentlySelectedTrack.ID, 30*time.Minute)
+		curatedPlaylist.BlacklistTrack(currentlySelectedTrack.ID, 60*time.Minute)
+
 		player.QueueAdd(currentlySelectedTrack)
 		renderPlaylistTitles()
 	}
@@ -333,11 +328,13 @@ func main() {
 			updateHeaderText()
 
 		case <-bannerColorTicker:
-			if uiHeader.TextStyle.Fg == 46 {
-				uiHeader.TextStyle.Fg = 16
-			} else {
-				uiHeader.TextStyle.Fg += 1
-			}
+			/*
+				if uiHeader.TextStyle.Fg == 46 {
+					uiHeader.TextStyle.Fg = 16
+				} else {
+					uiHeader.TextStyle.Fg += 1
+				}*/
+			uiHeader.FadeOffset = (uiHeader.FadeOffset + 1) % 200
 			ui.Render(uiHeader)
 		case <-queueRefresh:
 			{
