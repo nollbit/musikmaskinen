@@ -120,19 +120,19 @@ func main() {
 
 	uiUsage := widgets.NewParagraph()
 	uiUsage.Title = "Instruction"
-	uiUsage.TitleStyle = ui.NewStyle(ui.ColorWhite, ui.ColorBlack, ui.ModifierBold)
+	//uiUsage.TitleStyle = ui.NewStyle(ui.ColorWhite, ui.ColorBlack, ui.ModifierBold)
 	uiUsage.TextStyle = ui.NewStyle(ui.ColorWhite, ui.ColorBlack, ui.ModifierBold)
 
 	uiTrackList := widgets.NewList()
 	uiTrackList.Title = "Tracks"
-	uiTrackList.TitleStyle = ui.NewStyle(ui.ColorWhite, ui.ColorBlack, ui.ModifierBold)
+	//uiTrackList.TitleStyle = ui.NewStyle(ui.ColorWhite, ui.ColorBlack, ui.ModifierBold)
 	uiTrackList.TextStyle = ui.NewStyle(ui.ColorYellow)
 	uiTrackList.SelectedRowStyle = ui.NewStyle(ui.ColorBlack, ui.ColorYellow, ui.ModifierBold)
 	uiTrackList.WrapText = false
 
 	uiQueueTable := widgets.NewTable()
 	uiQueueTable.Rows = [][]string{
-		[]string{"   ", " Track", " Dur.", " Wait"},
+		[]string{" ", " Dur.", " Wait"},
 	}
 	uiQueueTable.TextStyle = ui.NewStyle(ui.ColorWhite)
 	uiQueueTable.RowSeparator = true
@@ -141,19 +141,19 @@ func main() {
 	uiQueueTable.TitleStyle = ui.NewStyle(ui.ColorWhite, ui.ColorBlack, ui.ModifierBold)
 
 	uiQueueTable.ColumnResizer = func() {
-		widthLeft := uiQueueTable.Inner.Dx() - 20
-		uiQueueTable.ColumnWidths = []int{3, widthLeft, 6, 7}
+		widthLeft := uiQueueTable.Inner.Dx() - 17
+		uiQueueTable.ColumnWidths = []int{widthLeft, 6, 7}
 	}
 
 	uiTrackInfo := widgets.NewParagraph()
 	uiTrackInfo.Title = "Current Track"
-	uiTrackInfo.TitleStyle = ui.NewStyle(ui.ColorWhite, ui.ColorBlack, ui.ModifierBold)
+	//uiTrackInfo.TitleStyle = ui.NewStyle(ui.ColorWhite, ui.ColorBlack, ui.ModifierBold)
 	uiTrackInfo.Text = ""
 	uiTrackInfo.WrapText = false
 
 	uiTrackPlayerGauge := widgets.NewGauge()
 	uiTrackPlayerGauge.Title = "Playing"
-	uiTrackPlayerGauge.TitleStyle = ui.NewStyle(ui.ColorWhite, ui.ColorBlack, ui.ModifierBold)
+	//uiTrackPlayerGauge.TitleStyle = ui.NewStyle(ui.ColorWhite, ui.ColorBlack, ui.ModifierBold)
 	uiTrackPlayerGauge.Percent = 0
 	uiTrackPlayerGauge.LabelStyle = ui.NewStyle(ui.ColorWhite, ui.ColorBlack)
 	uiTrackPlayerGauge.Label = "<3!"
@@ -241,11 +241,9 @@ func main() {
 			{
 				track := player.CurrentlyPlaying()
 				if track != nil {
-					rd := track.Album.ReleaseDate
-					if len(rd) >= 4 {
-						year := rd[0:4]
-						headerText = fmt.Sprintf("PARTY LIKE ITS %s!", year)
-					} else {
+					headerText = track.Artists[0].Name
+					if len(headerText) > 20 {
+						// doesn't fit
 						headerText = "MUSIKMASKINEN"
 					}
 				} else {
@@ -281,7 +279,7 @@ func main() {
 			formattedTracks = append(formattedTracks, title)
 		}
 
-		uiTrackList.Title = fmt.Sprintf(" %d tracks to choose from ", len(formattedTracks))
+		//uiTrackList.Title = fmt.Sprintf(" %d tracks to choose from ", len(formattedTracks))
 		uiTrackList.Rows = formattedTracks
 	}
 
@@ -365,13 +363,12 @@ func main() {
 			{
 
 				rows := [][]string{
-					[]string{"   ", " Track", " Dur.", " Wait"},
+					[]string{"", " Dur.", " Wait"},
 				}
 
 				for i, qs := range player.GetQueue() {
 					row := []string{
-						fmt.Sprintf(" %d ", i+1),
-						fmt.Sprintf(" [%s](fg:white,mod:bold) - [%s](fg:yellow,mod:bold)", qs.Track.Artists[0].Name, qs.Track.Name),
+						fmt.Sprintf(" %d | [%s](fg:white,mod:bold) - [%s](fg:yellow,mod:bold)", i+1, qs.Track.Artists[0].Name, qs.Track.Name),
 						fmt.Sprintf(" %s ", formatLength(qs.Track.Duration/1000)),
 						fmt.Sprintf(" %s ", formatLength(qs.TimeUntilStart)),
 					}
@@ -398,10 +395,9 @@ func main() {
 					template := `
 					 [Artist](fg:blue,mod:bold):   [%s](fg:white,mod:bold)
 					 [Title](fg:blue,mod:bold):    [%s](fg:white,mod:bold)
-					 [Album](fg:blue,mod:bold):    [%s](fg:white,mod:bold)
-					 [Release](fg:blue,mod:bold):  [%s](fg:white,mod:bold)`
+					 [Album](fg:blue,mod:bold):    [%s](fg:white,mod:bold)`
 
-					currentTrack = fmt.Sprintf(template, s.Artists[0].Name, s.Name, s.Album.Name, s.Album.ReleaseDate)
+					currentTrack = fmt.Sprintf(template, s.Artists[0].Name, s.Name, s.Album.Name)
 					gaugeLabel = formatLength(trackEvent.Remaining)
 					gaugePercent = int((float32((s.Duration/1000)-trackEvent.Remaining) / float32(s.Duration/1000)) * 100)
 				}
