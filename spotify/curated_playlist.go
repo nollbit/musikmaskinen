@@ -2,6 +2,7 @@ package spotify
 
 import (
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/nollbit/spotify"
@@ -89,10 +90,12 @@ func NewCuratedPlaylist(spotifyClient *spotify.Client, playlistID spotify.ID) (*
 				continue
 			}
 
-			// sort by first artist name, track name desc
+			// sort by first artist name (case insensitive), track name desc
 			sort.Slice(newCuratedPlaylistTracks, func(i, j int) bool {
-				if newCuratedPlaylistTracks[i].Artists[0].Name != newCuratedPlaylistTracks[j].Artists[0].Name {
-					return newCuratedPlaylistTracks[i].Artists[0].Name < newCuratedPlaylistTracks[j].Artists[0].Name
+				artistI := strings.ToLower(newCuratedPlaylistTracks[i].Artists[0].Name)
+				artistJ := strings.ToLower(newCuratedPlaylistTracks[j].Artists[0].Name)
+				if artistI != artistJ {
+					return artistI < artistJ
 				}
 				return newCuratedPlaylistTracks[i].Name < newCuratedPlaylistTracks[j].Name
 			})
