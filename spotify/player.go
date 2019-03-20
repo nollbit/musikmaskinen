@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/nollbit/spotify"
 	log "github.com/sirupsen/logrus"
-	"github.com/zmb3/spotify"
 )
 
 type (
@@ -159,7 +159,7 @@ func (p *Player) playNextTrackIfNotAlready() {
 
 		// make sure we actually start playing the track before going in to the track loop
 		for {
-			log.Debug("Polling for track start")
+			//log.Debug("Polling for track start")
 			cp, err = p.client.PlayerCurrentlyPlaying()
 			if err != nil {
 				log.WithError(err).Warn("Unable to poll currently playing")
@@ -179,16 +179,12 @@ func (p *Player) playNextTrackIfNotAlready() {
 		trackProgressMillis := cp.Progress
 		almostDone := false
 
-		log.Debugf("trackProgressMillis outside = %d", trackProgressMillis)
-
 		// we don't query spotify all the time, so keep track on when we did it last
 		latestFullUpdate := time.Now()
 		for {
 			elapsedSinceFullUpdate := time.Now().Sub(latestFullUpdate)
-			log.Infof("elapsed since full update = %d, almostDone = %v", int(elapsedSinceFullUpdate.Seconds()), almostDone)
 
 			if int(elapsedSinceFullUpdate.Seconds()) > 10 || almostDone {
-				log.Debug("Polling for track change")
 
 				cp, err = p.client.PlayerCurrentlyPlaying()
 				if err != nil {
@@ -200,15 +196,11 @@ func (p *Player) playNextTrackIfNotAlready() {
 				trackProgressMillis = cp.Progress
 			} else {
 				trackProgressMillis = cp.Progress + int(elapsedSinceFullUpdate.Nanoseconds()/1000000)
-				log.Debugf("int(elapsedSinceFullUpdate.Nanoseconds()/1000000) = %d", int(elapsedSinceFullUpdate.Nanoseconds()/1000000))
 			}
 
 			currentTrackRemainingMillis := trackLengthMillis - trackProgressMillis
 			currentTrackRemaining := currentTrackRemainingMillis / 1000
 			p.currentTrackRemaining = currentTrackRemaining
-
-			log.Debugf("trackProgressMillis = %d", trackProgressMillis)
-			log.Debugf("currentTrackRemainingMillis = %d", currentTrackRemainingMillis)
 
 			done := !cp.Playing
 

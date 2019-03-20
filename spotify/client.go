@@ -9,8 +9,8 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
+	"github.com/nollbit/spotify"
 	"github.com/toqueteos/webbrowser"
-	"github.com/zmb3/spotify"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 

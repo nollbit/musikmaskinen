@@ -3,7 +3,7 @@ package spotify
 import (
 	"errors"
 
-	"github.com/zmb3/spotify"
+	"github.com/nollbit/spotify"
 )
 
 type (
