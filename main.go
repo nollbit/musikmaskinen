@@ -337,13 +337,7 @@ func main() {
 			updateHeaderText()
 
 		case <-bannerColorTicker:
-			/*
-				if uiHeader.TextStyle.Fg == 46 {
-					uiHeader.TextStyle.Fg = 16
-				} else {
-					uiHeader.TextStyle.Fg += 1
-				}*/
-			uiHeader.FadeOffset = (uiHeader.FadeOffset + 1) % 200
+			uiHeader.Tick()
 			ui.Render(uiHeader)
 		case <-player.QueueEvents:
 			{

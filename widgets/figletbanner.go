@@ -8,13 +8,13 @@ import (
 )
 
 // FigletBanner is an animated header that uses figlet fonts to render the color
-// faded header text. Increase FadeOffset periodically to animate it.
+// faded header text. Call Tick() to animate it.
 type FigletBanner struct {
 	termui.Block
 	Text       string
 	TextStyle  termui.Style
 	FigletFont *figletlib.Font
-	FadeOffset int
+	fadeOffset int
 }
 
 func NewFigletBanner() *FigletBanner {
@@ -46,6 +46,10 @@ func init() {
 
 }
 
+func (f *FigletBanner) Tick() {
+	f.fadeOffset = (f.fadeOffset + 1) % len(fadeColors)
+}
+
 func (f *FigletBanner) Draw(buf *termui.Buffer) {
 	f.Block.Draw(buf)
 
@@ -69,12 +73,14 @@ func (f *FigletBanner) Draw(buf *termui.Buffer) {
 func (f *FigletBanner) cyclicHoriFade(s string) [][]termui.Cell {
 	runes := []rune(s)
 
+	fadeOffset := f.fadeOffset
+
 	rows := make([][]termui.Cell, 0)
 	row := make([]termui.Cell, 0, 100)
-	colorIndex := f.FadeOffset
+	colorIndex := fadeOffset
 	for _, rune := range runes {
 		if rune == '\n' {
-			colorIndex = f.FadeOffset + len(rows)
+			colorIndex = fadeOffset + len(rows)
 			rows = append(rows, row)
 			row = make([]termui.Cell, 0, 100)
 		} else {
