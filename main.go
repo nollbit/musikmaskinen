@@ -381,12 +381,22 @@ func main() {
 				} else {
 					s := trackEvent.Track
 
+					var artists strings.Builder
+					for i, artist := range s.Artists {
+						if i == len(s.Artists)-1 && len(s.Artists) > 1 {
+							artists.WriteString(" & ")
+						} else if len(s.Artists) > 1 && i > 0 {
+							artists.WriteString(", ")
+						}
+						artists.WriteString(artist.Name)
+					}
+
 					template := `
 					 [Artist](fg:blue,mod:bold):   [%s](fg:white,mod:bold)
 					 [Title](fg:blue,mod:bold):    [%s](fg:yellow,mod:bold)
 					 [Album](fg:blue,mod:bold):    [%s](fg:white,mod:bold)`
 
-					currentTrack = fmt.Sprintf(template, s.Artists[0].Name, s.Name, s.Album.Name)
+					currentTrack = fmt.Sprintf(template, artists.String(), s.Name, s.Album.Name)
 					gaugeLabel = formatLength(trackEvent.Remaining)
 					gaugePercent = int((float32((s.Duration/1000)-trackEvent.Remaining) / float32(s.Duration/1000)) * 100)
 				}
