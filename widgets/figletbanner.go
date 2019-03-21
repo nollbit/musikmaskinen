@@ -7,6 +7,8 @@ import (
 	"github.com/lukesampson/figlet/figletlib"
 )
 
+// FigletBanner is an animated header that uses figlet fonts to render the color
+// faded header text. Increase FadeOffset periodically to animate it.
 type FigletBanner struct {
 	termui.Block
 	Text       string
