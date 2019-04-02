@@ -1,5 +1,5 @@
 ## Musikmaskinen
-*The only music machine your party needs*
+_The only music machine your party needs_
 
 ![](readme-assets/demo.gif)
 
@@ -42,4 +42,4 @@ Do note that I'm not really an electronics person, so feel free to improve the h
 
 Apache 2.0
 
-*note* The font `ansi_shadow.flf` used by the animated header has an unclear license status. It seems to be from the 90's. If you object to that file and derivatives being a part of this repository, please contact me. 
+_note_ The font `ansi_shadow.flf` used by the animated header has an unclear license status. It seems to be from the 90's. If you object to that file and derivatives being a part of this repository, please contact me. 
