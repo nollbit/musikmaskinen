@@ -38,7 +38,7 @@ Having a fixed queue size also creates a social spot around the machine when peo
 
 ## Navigation
 - <kbd>&uarr;</kbd> and <kbd>&darr;</kbd> to select a song
-- <kbd>↵</kbd> (Enter) to queue song
+- <kbd>ENTER ↵</kbd> to queue song
 - <kbd>D</kbd> to delete the latest added item in the queue
 - <kbd>S</kbd> to skip the current playing song. Note that this can take up to ten seconds.
 
