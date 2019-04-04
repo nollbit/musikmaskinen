@@ -3,6 +3,8 @@
 
 ![](readme-assets/demo.gif)
 
+There's a [slightly longer version of the clip above](https://www.youtube.com/watch?v=4eOtZwa1e0I&feature=youtu.be).
+
 # Overview
 Musikmaskinen is software and hardware that acts as a crowd sourced DJ for your party. In essence, it;
 
