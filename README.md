@@ -56,6 +56,9 @@ Do note that this code is pretty rough. I had a very limited time to get things 
 - [ ] Create an alternative UI, possibly as a web interface
 
 # Hardware
+
+![](readme-assets/mm-controller.png)
+
 The hardware is based on a simple Arduino with a rotary encoder and a buttton. There's support for a LED in the button that blinks whenever the queue is empty. 
 
 The hardware ("controller") uses a very simple serial protocol to communicate with the software.
